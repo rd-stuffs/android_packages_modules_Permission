@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package com.android.permissioncontroller.permission.ui.auto;
+package com.android.permissioncontroller.permission.compat;
 
-import com.android.permissioncontroller.R;
+import android.content.Intent;
 
-/** Shows additional non-system permissions that can be granted/denied. */
-public class AutoManageCustomPermissionsFragment extends AutoManagePermissionsFragment {
+/** Holds Intent constants across SDKs for compatibility. */
+public class IntentCompat {
 
-    @Override
-    protected int getScreenHeaderRes() {
-        return R.string.additional_permissions;
-    }
-
-    @Override
-    protected void updatePermissionsUi() {
-        updatePermissionsUi(/* addSystemPermissions= */ false);
-    }
+    /**
+     * A boolean mentioning UI shows attribution for the app.
+     * <p> used with {@link Intent#ACTION_VIEW_PERMISSION_USAGE_FOR_PERIOD}. </p>
+     */
+    public static final String EXTRA_SHOWING_ATTRIBUTION =
+            "android.intent.extra.SHOWING_ATTRIBUTION";
 }

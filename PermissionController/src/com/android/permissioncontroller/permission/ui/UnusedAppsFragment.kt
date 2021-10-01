@@ -56,14 +56,13 @@ class UnusedAppsFragment<PF, UnusedAppPref> : PreferenceFragmentCompat()
     where PF : PreferenceFragmentCompat, PF : UnusedAppsFragment.Parent<UnusedAppPref>,
           UnusedAppPref : Preference, UnusedAppPref : RemovablePref {
 
-    private val INFO_MSG_CATEGORY = "info_msg_category"
-
     private lateinit var viewModel: UnusedAppsViewModel
     private lateinit var collator: Collator
     private var sessionId: Long = 0L
     private var isFirstLoad = false
 
     companion object {
+        public const val INFO_MSG_CATEGORY = "info_msg_category"
         private const val SHOW_LOAD_DELAY_MS = 200L
         private const val INFO_MSG_KEY = "info_msg"
         private const val ELEVATION_HIGH = 8f
@@ -114,15 +113,21 @@ class UnusedAppsFragment<PF, UnusedAppPref> : PreferenceFragmentCompat()
 
         activity?.getActionBar()?.setDisplayHomeAsUpEnabled(true)
 
-        if (!viewModel.areUnusedPackagesLoaded()) {
+        if (!viewModel.unusedPackageCategoriesLiveData.isInitialized) {
             GlobalScope.launch(IPC) {
                 delay(SHOW_LOAD_DELAY_MS)
-                if (!viewModel.areUnusedPackagesLoaded()) {
+                if (!viewModel.unusedPackageCategoriesLiveData.isInitialized) {
                     GlobalScope.launch(Main) {
                         preferenceFragment.setLoadingState(loading = true, animate = true)
                     }
+                } else {
+                    GlobalScope.launch(Main) {
+                        updatePackages(viewModel.unusedPackageCategoriesLiveData.value!!)
+                    }
                 }
             }
+        } else {
+            updatePackages(viewModel.unusedPackageCategoriesLiveData.value!!)
         }
     }
 
@@ -253,9 +258,7 @@ class UnusedAppsFragment<PF, UnusedAppPref> : PreferenceFragmentCompat()
             }
         }
 
-        val infoMsgCategory =
-            preferenceScreen.findPreference<PreferenceCategory>(INFO_MSG_CATEGORY)!!
-        infoMsgCategory.isVisible = !allCategoriesEmpty
+        preferenceFragment.setEmptyState(allCategoriesEmpty)
 
         if (isFirstLoad) {
             if (categorizedPackages[Months.SIX]!!.isNotEmpty() ||
@@ -377,5 +380,12 @@ class UnusedAppsFragment<PF, UnusedAppPref> : PreferenceFragmentCompat()
             user: UserHandle,
             context: Context
         ): UnusedAppPref
+
+        /**
+         * Updates the state based on whether the content is empty.
+         *
+         * @param empty whether the content is empty
+         */
+        fun setEmptyState(empty: Boolean)
     }
 }
