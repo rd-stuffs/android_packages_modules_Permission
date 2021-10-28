@@ -64,13 +64,6 @@
             android:directBootAware="true"
             android:theme="@style/FilterTouches">
 
-        <provider
-            android:name="androidx.lifecycle.ProcessLifecycleOwnerInitializer"
-            tools:replace="android:authorities"
-            android:authorities="${applicationId}.lifecycle-process"
-            android:exported="false"
-            android:multiprocess="true" />
-
         <receiver android:name="com.android.permissioncontroller.permission.service.LocationAccessCheck$SetupPeriodicBackgroundLocationAccessCheck">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -329,6 +322,10 @@
 
         <receiver android:name="com.android.permissioncontroller.permission.service.ExemptRestrictedPermission"
                   android:exported="false" />
+
+        <activity android:name="com.android.permissioncontroller.securityhub.SecurityHubActivity"
+                  android:theme="@style/Theme.PermissionController.Settings.FilterTouches" />
+
     </application>
 
 </manifest>
