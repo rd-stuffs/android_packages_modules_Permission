@@ -522,11 +522,13 @@
             <permission-set name="location" />
             <permission-set name="nearby_devices" />
             <permission name="android.permission.CALL_PHONE" />
+            <permission name="android.permission.CREATE_VIRTUAL_DEVICE" minSdkVersion="33" />
             <permission name="android.permission.READ_CALENDAR" />
             <permission name="android.permission.READ_CALL_LOG" />
             <permission name="android.permission.READ_CONTACTS" />
             <permission name="android.permission.READ_PHONE_STATE" />
             <permission name="android.permission.RECEIVE_SMS" />
+            <permission name="android.permission.REQUEST_COMPANION_PROFILE_AUTOMOTIVE_PROJECTION" minSdkVersion="33" />
             <permission name="android.permission.SEND_SMS" />
             <permission name="android.permission.TOGGLE_AUTOMOTIVE_PROJECTION" minSdkVersion="33" />
         </permissions>
@@ -543,6 +545,7 @@
         visible="false">
         <permissions>
             <!-- Used for CTS testing -->
+            <permission name="android.permission.CREATE_VIRTUAL_DEVICE" minSdkVersion="33" />
             <permission name="android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE" />
             <permission name="android.permission.PERFORM_IMS_SINGLE_REGISTRATION" />
             <permission name="android.permission.BACKGROUND_CAMERA" />
@@ -996,11 +999,67 @@
         systemOnly="true"
         visible="false">
         <permissions>
-            <!--TODO(b/194949534) For calling VirtualDevice API-->
-            <!--<permission name="android.permission.CREATE_VIRTUAL_DEVICE" />-->
+            <permission name="android.permission.CREATE_VIRTUAL_DEVICE" minSdkVersion="33" />
 
             <!--TODO(b/201605314) For calling Telecom framework API for audio streaming-->
             <!--<permission name="android.permission.PROVIDE_CALL_ENDPOINTS" />-->
+       </permissions>
+    </role>
+
+     <role
+        name="android.app.role.SYSTEM_SUPERVISION"
+        defaultHolders="config_systemSupervision"
+        exclusive="true"
+        minSdkVersion="33"
+        static="true"
+        systemOnly="true"
+        visible="false" >
+        <permissions>
+            <permission name="android.permission.ACCESS_INSTANT_APPS"/>
+            <permission name="android.permission.SUSPEND_APPS"/>
+            <permission name="android.permission.SYSTEM_APPLICATION_OVERLAY"/>
+        </permissions>
+    </role>
+
+    <!---
+      ~ A role for the package responsible for constructing managed device experiences,
+      ~ including during provisioning.
+      -->
+    <role
+        name="android.app.role.DEVICE_MANAGER"
+        defaultHolders="config_deviceManager"
+        exclusive="true"
+        minSdkVersion="33"
+        static="true"
+        systemOnly="false"
+        visible="false">
+        <permissions>
+            <permission name="android.permission.BIND_DEVICE_ADMIN" />
+            <permission name="android.permission.MANAGE_DEVICE_ADMINS" />
+            <permission name="android.permission.NETWORK_MANAGED_PROVISIONING" />
+            <permission name="android.permission.PEERS_MAC_ADDRESS" />
+            <permission name="android.permission.USE_COLORIZED_NOTIFICATIONS" />
+            <permission name="android.permission.MASTER_CLEAR" />
+            <permission name="android.permission.WRITE_SECURE_SETTINGS" />
+            <permission name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
+            <permission name="android.permission.START_ACTIVITIES_FROM_BACKGROUND" />
+            <permission name="android.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND" />
+            <permission name="android.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS" />
+            <permission name="android.permission.INTERACT_ACROSS_USERS" />
+            <permission name="android.permission.INTERACT_ACROSS_USERS_FULL" />
+            <permission name="com.android.permission.INSTALL_EXISTING_PACKAGES" />
+            <permission name="android.permission.DELETE_PACKAGES" />
+            <permission name="android.permission.ACCESS_PDB_STATE" />
+            <permission name="android.permission.MARK_DEVICE_ORGANIZATION_OWNED" />
+            <permission name="android.permission.CHANGE_COMPONENT_ENABLED_STATE" />
+            <permission name="android.permission.SET_TIME" />
+            <permission name="android.permission.SET_TIME_ZONE" />
+            <permission name="android.permission.CRYPT_KEEPER" />
+            <permission name="android.permission.SHUTDOWN" />
+            <permission name="android.permission.PERFORM_CDMA_PROVISIONING" />
+            <permission name="android.permission.CONFIGURE_INTERACT_ACROSS_PROFILES" />
+            <permission name="android.permission.WRITE_SETTINGS" />
+            <permission name="android.permission.CHANGE_CONFIGURATION" />
         </permissions>
     </role>
 </roles>
