@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package android.safetycenter;
+package com.android.permissioncontroller.safetycenter.ui;
 
-/**
- * Parcelable AIDL SafetyIssueData.
- *
- * @hide
- */
-parcelable SafetyIssueData;
+import android.os.Bundle;
+
+import androidx.preference.PreferenceFragmentCompat;
+
+import com.android.permissioncontroller.R;
+
+/** Dashboard fragment for the Safety Center **/
+public final class SafetyCenterDashboardFragment extends PreferenceFragmentCompat {
+
+    @Override
+    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+        setPreferencesFromResource(R.xml.safety_center_dashboard, rootKey);
+    }
+}

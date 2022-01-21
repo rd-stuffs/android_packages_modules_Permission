@@ -37,6 +37,7 @@ import androidx.core.util.Consumer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.android.permissioncontroller.Constants
+import com.android.permissioncontroller.DeviceUtils
 import com.android.permissioncontroller.PermissionControllerStatsLog
 import com.android.permissioncontroller.PermissionControllerStatsLog.GRANT_PERMISSIONS_ACTIVITY_BUTTON_ACTIONS
 import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_GRANT_REQUEST_RESULT_REPORTED__RESULT__AUTO_DENIED
@@ -53,6 +54,7 @@ import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_
 import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_GRANT_REQUEST_RESULT_REPORTED__RESULT__USER_GRANTED_IN_SETTINGS
 import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_GRANT_REQUEST_RESULT_REPORTED__RESULT__USER_GRANTED_ONE_TIME
 import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_GRANT_REQUEST_RESULT_REPORTED__RESULT__USER_IGNORED
+import com.android.permissioncontroller.auto.DrivingDecisionReminderService
 import com.android.permissioncontroller.permission.data.LightAppPermGroupLiveData
 import com.android.permissioncontroller.permission.data.LightPackageInfoLiveData
 import com.android.permissioncontroller.permission.data.PackagePermissionsLiveData
@@ -61,6 +63,7 @@ import com.android.permissioncontroller.permission.data.get
 import com.android.permissioncontroller.permission.model.livedatatypes.LightAppPermGroup
 import com.android.permissioncontroller.permission.model.livedatatypes.LightPackageInfo
 import com.android.permissioncontroller.permission.model.livedatatypes.LightPermGroupInfo
+import com.android.permissioncontroller.permission.service.RecentPermissionDecisionsStorage
 import com.android.permissioncontroller.permission.ui.AutoGrantPermissionsNotifier
 import com.android.permissioncontroller.permission.ui.GrantPermissionsActivity
 import com.android.permissioncontroller.permission.ui.GrantPermissionsActivity.ALLOW_BUTTON
@@ -87,11 +90,11 @@ import com.android.permissioncontroller.permission.ui.GrantPermissionsViewHandle
 import com.android.permissioncontroller.permission.ui.GrantPermissionsViewHandler.DENIED_DO_NOT_ASK_AGAIN
 import com.android.permissioncontroller.permission.ui.GrantPermissionsViewHandler.GRANTED_ALWAYS
 import com.android.permissioncontroller.permission.ui.GrantPermissionsViewHandler.GRANTED_FOREGROUND_ONLY
-import com.android.permissioncontroller.permission.ui.handheld.dashboard.getDefaultPrecision
-import com.android.permissioncontroller.permission.ui.handheld.dashboard.isLocationAccuracyEnabled
 import com.android.permissioncontroller.permission.ui.ManagePermissionsActivity
 import com.android.permissioncontroller.permission.ui.ManagePermissionsActivity.EXTRA_RESULT_PERMISSION_INTERACTED
 import com.android.permissioncontroller.permission.ui.ManagePermissionsActivity.EXTRA_RESULT_PERMISSION_RESULT
+import com.android.permissioncontroller.permission.ui.handheld.dashboard.getDefaultPrecision
+import com.android.permissioncontroller.permission.ui.handheld.dashboard.isLocationAccuracyEnabled
 import com.android.permissioncontroller.permission.utils.AdminRestrictedPermissionsUtils
 import com.android.permissioncontroller.permission.utils.KotlinUtils
 import com.android.permissioncontroller.permission.utils.SafetyNetLogger
@@ -898,6 +901,23 @@ class GrantPermissionsViewModel(
         reportRequestResult(groupState.affectedPermissions, result)
         // group state has changed, reload liveData
         requestInfosLiveData.update()
+        RecentPermissionDecisionsStorage.recordPermissionDecision(app.applicationContext,
+            packageName, groupState.group.permGroupName, granted)
+        if (granted) {
+            startDrivingDecisionReminderServiceIfNecessary(groupState.group.permGroupName)
+        }
+    }
+
+    /**
+     * When distraction optimization is required (the vehicle is in motion), the user may want to
+     * review their permission grants when they are less distracted.
+     */
+    private fun startDrivingDecisionReminderServiceIfNecessary(permGroupName: String) {
+        if (!DeviceUtils.isAuto(app.applicationContext)) {
+            return
+        }
+        DrivingDecisionReminderService.startServiceIfCurrentlyRestricted(
+            Utils.getUserContext(app, user), packageName, permGroupName)
     }
 
     private fun getGroupWithPerm(

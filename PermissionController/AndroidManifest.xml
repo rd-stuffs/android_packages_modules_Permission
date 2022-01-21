@@ -98,6 +98,8 @@
         <service android:name="com.android.permissioncontroller.permission.service.AutoRevokeReGrantService"
                  android:permission="android.permission.BIND_JOB_SERVICE" />
 
+        <service android:name="com.android.permissioncontroller.permission.service.DecisionCleanupJobService"
+                 android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <activity android:name="com.android.permissioncontroller.permission.ui.GrantPermissionsActivity"
                 android:configChanges="keyboardHidden|screenSize"
@@ -296,7 +298,17 @@
             </intent-filter>
         </service>
 
+        <service android:name="com.android.permissioncontroller.auto.DrivingDecisionReminderService" />
+
         <receiver android:name="com.android.permissioncontroller.role.service.ClearUserDeniedReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_DATA_CLEARED" />
+                <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED"/>
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="com.android.permissioncontroller.permission.service.PersistedStoragePackageUninstalledReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_DATA_CLEARED" />
                 <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED"/>
@@ -324,8 +336,14 @@
         <receiver android:name="com.android.permissioncontroller.permission.service.ExemptRestrictedPermission"
                   android:exported="false" />
 
-        <activity android:name="com.android.permissioncontroller.safetycenter.SafetyCenterActivity"
-                  android:theme="@style/Theme.PermissionController.Settings.FilterTouches" />
+        <activity
+            android:name="com.android.permissioncontroller.safetycenter.ui.SafetyCenterActivity"
+            android:theme="@style/Theme.PermissionController.Settings.FilterTouches">
+            <intent-filter android:priority="1">
+                <action android:name="android.intent.action.SAFETY_CENTER"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
 
     </application>
 
