@@ -62,8 +62,6 @@ import android.content.pm.PermissionInfo;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.SensorPrivacyManager;
 import android.os.Build;
@@ -162,6 +160,17 @@ public final class Utils {
     /** Whether to show location access check notifications. */
     private static final String PROPERTY_LOCATION_ACCESS_CHECK_ENABLED =
             "location_access_check_enabled";
+
+    /** The time an app needs to be unused in order to be hibernated */
+    public static final String PROPERTY_PERMISSION_DECISIONS_CHECK_OLD_FREQUENCY_MILLIS =
+            "permission_decisions_check_old_frequency_millis";
+
+    /** The time an app needs to be unused in order to be hibernated */
+    public static final String PROPERTY_PERMISSION_DECISIONS_MAX_DATA_AGE_MILLIS =
+            "permission_decisions_max_data_age_millis";
+
+    /** Whether or not warning banner is displayed when device sensors are off **/
+    public static final String PROPERTY_WARNING_BANNER_DISPLAY_ENABLED = "warning_banner_enabled";
 
     /** All permission whitelists. */
     public static final int FLAGS_PERMISSION_WHITELIST_ALL =
@@ -978,9 +987,12 @@ public final class Utils {
             @NonNull ApplicationInfo appInfo) {
         UserHandle user = UserHandle.getUserHandleForUid(appInfo.uid);
         try (IconFactory iconFactory = IconFactory.obtain(context)) {
-            Bitmap iconBmp = iconFactory.createBadgedIconBitmap(
-                    appInfo.loadUnbadgedIcon(context.getPackageManager()), user, false).icon;
-            return new BitmapDrawable(context.getResources(), iconBmp);
+            return iconFactory.createBadgedIconBitmap(
+                    appInfo.loadUnbadgedIcon(context.getPackageManager()),
+                    new IconFactory.IconOptions()
+                            .setShrinkNonAdaptiveIcons(false)
+                            .setUser(user))
+                    .newIcon(context);
         }
     }
 
@@ -1300,8 +1312,10 @@ public final class Utils {
      * Returns if a card should be shown if the sensor is blocked
      **/
     public static boolean shouldDisplayCardIfBlocked(@NonNull String permissionGroupName) {
-        return CAMERA.equals(permissionGroupName) || MICROPHONE.equals(permissionGroupName)
-                || LOCATION.equals(permissionGroupName);
+        return DeviceConfig.getBoolean(
+                DeviceConfig.NAMESPACE_PRIVACY, PROPERTY_WARNING_BANNER_DISPLAY_ENABLED, false) && (
+                CAMERA.equals(permissionGroupName) || MICROPHONE.equals(permissionGroupName)
+                        || LOCATION.equals(permissionGroupName));
     }
 
     /**

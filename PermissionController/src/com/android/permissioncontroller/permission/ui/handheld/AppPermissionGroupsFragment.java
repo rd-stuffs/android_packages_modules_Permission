@@ -40,6 +40,8 @@ import android.icu.text.ListFormatter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.Log;
@@ -188,9 +190,26 @@ public final class AppPermissionGroupsFragment extends SettingsWithLargeHeader i
             mPermissionUsages.load(null, null, filterTimeBeginMillis, Long.MAX_VALUE,
                     PermissionUsages.USAGE_FLAG_LAST, getActivity().getLoaderManager(),
                     false, false, this, false);
+            // TODO 206455664: remove once issue is identified
+            new Handler(Looper.getMainLooper()).postDelayed(this::printState, 3000);
         }
 
         updatePreferences(mViewModel.getPackagePermGroupsLiveData().getValue());
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private void printState() {
+        int numPrefs =
+                getPreferenceScreen() != null ? getPreferenceScreen().getPreferenceCount() : -1;
+        if (numPrefs > 0) {
+            return;
+        }
+
+        Log.i(LOG_TAG, "number of prefs: " + numPrefs);
+        Log.i(LOG_TAG, "Has created screen: " + (getPreferenceScreen() != null));
+        Log.i(LOG_TAG, "Has usages: " + (!mPermissionUsages.getUsages().isEmpty()));
+        mViewModel.logLiveDataState();
     }
 
     @Override
@@ -269,7 +288,17 @@ public final class AppPermissionGroupsFragment extends SettingsWithLargeHeader i
     }
 
     private void updatePreferences(Map<Category, List<GroupUiInfo>> groupMap) {
-        if (groupMap == null) {
+        if (groupMap == null && mViewModel.getPackagePermGroupsLiveData().isInitialized()) {
+            // null because explicitly set to null
+            Toast.makeText(
+                    getActivity(), R.string.app_not_found_dlg_title, Toast.LENGTH_LONG).show();
+            Log.w(LOG_TAG, "invalid package " + mPackageName);
+
+            pressBack(this);
+
+            return;
+        } else if (groupMap == null) {
+            // null because uninitialized
             return;
         }
 
@@ -280,15 +309,6 @@ public final class AppPermissionGroupsFragment extends SettingsWithLargeHeader i
             return;
         }
 
-        if (groupMap == null && mViewModel.getPackagePermGroupsLiveData().isInitialized()) {
-            Toast.makeText(
-                    getActivity(), R.string.app_not_found_dlg_title, Toast.LENGTH_LONG).show();
-            Log.w(LOG_TAG, "invalid package " + mPackageName);
-
-            pressBack(this);
-
-            return;
-        }
 
         Map<String, Long> groupUsageLastAccessTime = new HashMap<>();
         mViewModel.extractGroupUsageLastAccessTime(groupUsageLastAccessTime, mAppPermissionUsages,
