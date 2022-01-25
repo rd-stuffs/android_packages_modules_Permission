@@ -50,6 +50,7 @@ import com.android.permissioncontroller.permission.data.SmartUpdateMediatorLiveD
 import com.android.permissioncontroller.permission.model.livedatatypes.AppPermGroupUiInfo.PermGrantState
 import com.android.permissioncontroller.permission.ui.Category
 import com.android.permissioncontroller.permission.ui.LocationProviderInterceptDialog
+import com.android.permissioncontroller.permission.ui.handheld.dashboard.is7DayToggleEnabled
 import com.android.permissioncontroller.permission.ui.model.PermissionAppsViewModel.Companion.CREATION_LOGGED_KEY
 import com.android.permissioncontroller.permission.ui.model.PermissionAppsViewModel.Companion.HAS_SYSTEM_APPS_KEY
 import com.android.permissioncontroller.permission.ui.model.PermissionAppsViewModel.Companion.SHOULD_SHOW_SYSTEM_KEY
@@ -79,7 +80,8 @@ class PermissionAppsViewModel(
 ) : ViewModel() {
 
     companion object {
-        const val AGGREGATE_DATA_FILTER_BEGIN_DAYS = 1
+        const val AGGREGATE_DATA_FILTER_BEGIN_DAYS_1 = 1
+        const val AGGREGATE_DATA_FILTER_BEGIN_DAYS_7 = 7
         internal const val SHOULD_SHOW_SYSTEM_KEY = "showSystem"
         internal const val HAS_SYSTEM_APPS_KEY = "hasSystem"
         internal const val SHOW_ALWAYS_ALLOWED = "showAlways"
@@ -90,11 +92,11 @@ class PermissionAppsViewModel(
     val hasSystemAppsLiveData = state.getLiveData(HAS_SYSTEM_APPS_KEY, true)
     val showAllowAlwaysStringLiveData = state.getLiveData(SHOW_ALWAYS_ALLOWED, false)
     val categorizedAppsLiveData = CategorizedAppsLiveData(groupName)
-    val sensorLiveData = mutableMapOf<String, SensorStatusLiveData>()
 
-    @RequiresApi(Build.VERSION_CODES.S)
-    fun getSensorStatusLiveData(): SensorStatusLiveData {
-        return sensorLiveData.getOrPut(groupName) { SensorStatusLiveData() }
+    @get:RequiresApi(Build.VERSION_CODES.S)
+    val sensorStatusLiveData: SensorStatusLiveData by lazy(LazyThreadSafetyMode.NONE)
+    @RequiresApi(Build.VERSION_CODES.S) {
+        SensorStatusLiveData()
     }
 
     fun updateShowSystem(showSystem: Boolean) {
@@ -124,8 +126,7 @@ class PermissionAppsViewModel(
             var blocked: Boolean
 
             if (isLocation) {
-                val userContext = Utils.getUserContext(app, android.os.Process.myUserHandle())
-                blocked = !LocationUtils.isLocationEnabled(userContext)
+                blocked = !LocationUtils.isLocationEnabled(app.getApplicationContext())
             } else {
                 blocked = sensorPrivacyManager.isSensorPrivacyEnabled(sensor)
             }
@@ -329,8 +330,11 @@ class PermissionAppsViewModel(
     }
 
     fun getFilterTimeBeginMillis(): Long {
+        val aggregateDataFilterBeginDays = if (is7DayToggleEnabled())
+            AGGREGATE_DATA_FILTER_BEGIN_DAYS_7 else AGGREGATE_DATA_FILTER_BEGIN_DAYS_1
+
         return max(System.currentTimeMillis() -
-                TimeUnit.DAYS.toMillis(AGGREGATE_DATA_FILTER_BEGIN_DAYS.toLong()),
+                TimeUnit.DAYS.toMillis(aggregateDataFilterBeginDays.toLong()),
                 Instant.EPOCH.toEpochMilli())
     }
 
@@ -340,10 +344,12 @@ class PermissionAppsViewModel(
      */
     fun extractGroupUsageLastAccessTime(appPermissionUsages: List<AppPermissionUsage>):
             MutableMap<String, Long> {
+        val aggregateDataFilterBeginDays = if (is7DayToggleEnabled())
+            AGGREGATE_DATA_FILTER_BEGIN_DAYS_7 else AGGREGATE_DATA_FILTER_BEGIN_DAYS_1
         val accessTime: MutableMap<String, Long> = HashMap()
         val now = System.currentTimeMillis()
         val filterTimeBeginMillis = max(
-                now - TimeUnit.DAYS.toMillis(AGGREGATE_DATA_FILTER_BEGIN_DAYS.toLong()),
+                now - TimeUnit.DAYS.toMillis(aggregateDataFilterBeginDays.toLong()),
                 Instant.EPOCH.toEpochMilli())
         val numApps: Int = appPermissionUsages.size
         for (appIndex in 0 until numApps) {
@@ -371,14 +377,19 @@ class PermissionAppsViewModel(
     /**
      * Return the String preference summary based on the last access time.
      */
-    fun getPreferenceSummary(res: Resources, summaryTimestamp: Pair<String, Int>): String {
+    fun getPreferenceSummary(res: Resources, summaryTimestamp: Triple<String, Int, String>):
+            String {
         return when (summaryTimestamp.second) {
             Utils.LAST_24H_CONTENT_PROVIDER -> res.getString(
-                    R.string.app_perms_content_provider)
+                    R.string.app_perms_content_provider_24h)
+            Utils.LAST_7D_CONTENT_PROVIDER -> res.getString(
+                    R.string.app_perms_content_provider_7d)
             Utils.LAST_24H_SENSOR_TODAY -> res.getString(R.string.app_perms_24h_access,
                     summaryTimestamp.first)
             Utils.LAST_24H_SENSOR_YESTERDAY -> res.getString(R.string.app_perms_24h_access_yest,
                     summaryTimestamp.first)
+            Utils.LAST_7D_SENSOR -> res.getString(R.string.app_perms_7d_access,
+                    summaryTimestamp.third, summaryTimestamp.first)
             else -> ""
         }
     }
