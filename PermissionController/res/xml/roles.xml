@@ -91,6 +91,7 @@
         fallBackToDefaultHolder="true"
         showNone="true"
         label="@string/role_assistant_label"
+        overrideUserWhenGranting="true"
         requestable="false"
         shortLabel="@string/role_assistant_short_label">
         <required-components>
@@ -143,6 +144,7 @@
         description="@string/role_browser_description"
         exclusive="true"
         label="@string/role_browser_label"
+        overrideUserWhenGranting="true"
         requestDescription="@string/role_browser_request_description"
         requestTitle="@string/role_browser_request_title"
         shortLabel="@string/role_browser_short_label">
@@ -183,6 +185,7 @@
         exclusive="true"
         fallBackToDefaultHolder="true"
         label="@string/role_dialer_label"
+        overrideUserWhenGranting="true"
         requestDescription="@string/role_dialer_request_description"
         requestTitle="@string/role_dialer_request_title"
         searchKeywords="@string/role_dialer_search_keywords"
@@ -257,6 +260,7 @@
         description="@string/role_sms_description"
         exclusive="true"
         label="@string/role_sms_label"
+        overrideUserWhenGranting="true"
         requestDescription="@string/role_sms_request_description"
         requestTitle="@string/role_sms_request_title"
         searchKeywords="@string/role_sms_search_keywords"
@@ -344,6 +348,7 @@
         description="@string/role_emergency_description"
         exclusive="true"
         label="@string/role_emergency_label"
+        overrideUserWhenGranting="true"
         requestDescription="@string/role_emergency_request_description"
         requestTitle="@string/role_emergency_request_title"
         searchKeywords="@string/role_emergency_search_keywords"
@@ -373,6 +378,7 @@
         description="@string/role_home_description"
         exclusive="true"
         label="@string/role_home_label"
+        overrideUserWhenGranting="true"
         requestDescription="@string/role_home_request_description"
         requestTitle="@string/role_home_request_title"
         searchKeywords="@string/role_home_search_keywords"
@@ -409,6 +415,7 @@
         description="@string/role_call_redirection_description"
         exclusive="true"
         label="@string/role_call_redirection_label"
+        overrideUserWhenGranting="true"
         requestDescription="@string/role_call_redirection_request_description"
         requestTitle="@string/role_call_redirection_request_title"
         shortLabel="@string/role_call_redirection_short_label"
@@ -429,6 +436,7 @@
         description="@string/role_call_screening_description"
         exclusive="true"
         label="@string/role_call_screening_label"
+        overrideUserWhenGranting="true"
         requestDescription="@string/role_call_screening_request_description"
         requestTitle="@string/role_call_screening_request_title"
         shortLabel="@string/role_call_screening_short_label"
@@ -486,7 +494,6 @@
         description="@string/role_watch_description"
         exclusive="false"
         minSdkVersion="31"
-        overrideUserWhenGranting="false"
         systemOnly="false"
         visible="false">
         <permissions>
@@ -515,11 +522,13 @@
             <permission-set name="location" />
             <permission-set name="nearby_devices" />
             <permission name="android.permission.CALL_PHONE" />
+            <permission name="android.permission.CREATE_VIRTUAL_DEVICE" minSdkVersion="33" />
             <permission name="android.permission.READ_CALENDAR" />
             <permission name="android.permission.READ_CALL_LOG" />
             <permission name="android.permission.READ_CONTACTS" />
             <permission name="android.permission.READ_PHONE_STATE" />
             <permission name="android.permission.RECEIVE_SMS" />
+            <permission name="android.permission.REQUEST_COMPANION_PROFILE_AUTOMOTIVE_PROJECTION" minSdkVersion="33" />
             <permission name="android.permission.SEND_SMS" />
             <permission name="android.permission.TOGGLE_AUTOMOTIVE_PROJECTION" minSdkVersion="33" />
         </permissions>
@@ -536,6 +545,7 @@
         visible="false">
         <permissions>
             <!-- Used for CTS testing -->
+            <permission name="android.permission.CREATE_VIRTUAL_DEVICE" minSdkVersion="33" />
             <permission name="android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE" />
             <permission name="android.permission.PERFORM_IMS_SINGLE_REGISTRATION" />
             <permission name="android.permission.BACKGROUND_CAMERA" />
@@ -545,6 +555,8 @@
             <permission name="android.permission.MANAGE_SENSOR_PRIVACY" />
             <permission name="android.permission.READ_GLOBAL_APP_SEARCH_DATA" />
             <permission name="android.permission.TOGGLE_AUTOMOTIVE_PROJECTION" minSdkVersion="33" />
+            <permission name="android.permission.SET_DEFAULT_ACCOUNT_FOR_CONTACTS"
+                minSdkVersion="33" />
         </permissions>
     </role>
 
@@ -978,4 +990,76 @@
         </permissions>
     </role>
 
+    <role
+        name="android.app.role.COMPANION_DEVICE_APP_STREAMING"
+        behavior="CompanionDeviceAppStreamingRoleBehavior"
+        description="@string/role_app_streaming_description"
+        exclusive="false"
+        minSdkVersion="33"
+        systemOnly="true"
+        visible="false">
+        <permissions>
+            <permission name="android.permission.CREATE_VIRTUAL_DEVICE" minSdkVersion="33" />
+
+            <!--TODO(b/201605314) For calling Telecom framework API for audio streaming-->
+            <!--<permission name="android.permission.PROVIDE_CALL_ENDPOINTS" />-->
+       </permissions>
+    </role>
+
+     <role
+        name="android.app.role.SYSTEM_SUPERVISION"
+        defaultHolders="config_systemSupervision"
+        exclusive="true"
+        minSdkVersion="33"
+        static="true"
+        systemOnly="true"
+        visible="false" >
+        <permissions>
+            <permission name="android.permission.ACCESS_INSTANT_APPS"/>
+            <permission name="android.permission.SUSPEND_APPS"/>
+            <permission name="android.permission.SYSTEM_APPLICATION_OVERLAY"/>
+        </permissions>
+    </role>
+
+    <!---
+      ~ A role for the package responsible for constructing managed device experiences,
+      ~ including during provisioning.
+      -->
+    <role
+        name="android.app.role.DEVICE_MANAGER"
+        defaultHolders="config_deviceManager"
+        exclusive="true"
+        minSdkVersion="33"
+        static="true"
+        systemOnly="false"
+        visible="false">
+        <permissions>
+            <permission name="android.permission.BIND_DEVICE_ADMIN" />
+            <permission name="android.permission.MANAGE_DEVICE_ADMINS" />
+            <permission name="android.permission.NETWORK_MANAGED_PROVISIONING" />
+            <permission name="android.permission.PEERS_MAC_ADDRESS" />
+            <permission name="android.permission.USE_COLORIZED_NOTIFICATIONS" />
+            <permission name="android.permission.MASTER_CLEAR" />
+            <permission name="android.permission.WRITE_SECURE_SETTINGS" />
+            <permission name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
+            <permission name="android.permission.START_ACTIVITIES_FROM_BACKGROUND" />
+            <permission name="android.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND" />
+            <permission name="android.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS" />
+            <permission name="android.permission.INTERACT_ACROSS_USERS" />
+            <permission name="android.permission.INTERACT_ACROSS_USERS_FULL" />
+            <permission name="com.android.permission.INSTALL_EXISTING_PACKAGES" />
+            <permission name="android.permission.DELETE_PACKAGES" />
+            <permission name="android.permission.ACCESS_PDB_STATE" />
+            <permission name="android.permission.MARK_DEVICE_ORGANIZATION_OWNED" />
+            <permission name="android.permission.CHANGE_COMPONENT_ENABLED_STATE" />
+            <permission name="android.permission.SET_TIME" />
+            <permission name="android.permission.SET_TIME_ZONE" />
+            <permission name="android.permission.CRYPT_KEEPER" />
+            <permission name="android.permission.SHUTDOWN" />
+            <permission name="android.permission.PERFORM_CDMA_PROVISIONING" />
+            <permission name="android.permission.CONFIGURE_INTERACT_ACROSS_PROFILES" />
+            <permission name="android.permission.WRITE_SETTINGS" />
+            <permission name="android.permission.CHANGE_CONFIGURATION" />
+        </permissions>
+    </role>
 </roles>

@@ -65,6 +65,7 @@ import android.content.res.Resources.Theme;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.hardware.SensorPrivacyManager;
 import android.os.Build;
 import android.os.Parcelable;
 import android.os.Process;
@@ -85,6 +86,7 @@ import android.view.MenuItem;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.core.text.BidiFormatter;
 import androidx.core.util.Preconditions;
@@ -96,6 +98,7 @@ import com.android.permissioncontroller.DeviceUtils;
 import com.android.permissioncontroller.PermissionControllerApplication;
 import com.android.permissioncontroller.R;
 import com.android.permissioncontroller.permission.model.AppPermissionGroup;
+import com.android.permissioncontroller.permission.model.livedatatypes.LightAppPermGroup;
 
 import java.lang.annotation.Retention;
 import java.time.ZonedDateTime;
@@ -193,6 +196,13 @@ public final class Utils {
     private static final ArrayMap<String, Integer> PERM_GROUP_UPGRADE_REQUEST_RES;
     private static final ArrayMap<String, Integer> PERM_GROUP_UPGRADE_REQUEST_DETAIL_RES;
 
+    /** Permission -> Sensor codes */
+    private static final ArrayMap<String, Integer> PERM_SENSOR_CODES;
+    /** Permission -> Icon res id */
+    private static final ArrayMap<String, Integer> PERM_BLOCKED_ICON;
+    /** Permission -> Title res id */
+    private static final ArrayMap<String, Integer> PERM_BLOCKED_TITLE;
+
     public static final int FLAGS_ALWAYS_USER_SENSITIVE =
             FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED
                     | FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED;
@@ -254,6 +264,9 @@ public final class Utils {
             PLATFORM_PERMISSIONS.put(Manifest.permission.BLUETOOTH_CONNECT, NEARBY_DEVICES);
             PLATFORM_PERMISSIONS.put(Manifest.permission.BLUETOOTH_SCAN, NEARBY_DEVICES);
             PLATFORM_PERMISSIONS.put(Manifest.permission.UWB_RANGING, NEARBY_DEVICES);
+        }
+        if (SdkLevel.isAtLeastT()) {
+            PLATFORM_PERMISSIONS.put(Manifest.permission.NEARBY_WIFI_DEVICES, NEARBY_DEVICES);
         }
 
         PLATFORM_PERMISSIONS.put(Manifest.permission.READ_CALL_LOG, CALL_LOG);
@@ -355,6 +368,23 @@ public final class Utils {
                 .put(MICROPHONE, R.string.permgroupupgraderequestdetail_microphone);
         PERM_GROUP_UPGRADE_REQUEST_DETAIL_RES
                 .put(CAMERA, R.string.permgroupupgraderequestdetail_camera);
+
+        PERM_SENSOR_CODES = new ArrayMap<>();
+        if (SdkLevel.isAtLeastS()) {
+            PERM_SENSOR_CODES.put(CAMERA, SensorPrivacyManager.Sensors.CAMERA);
+            PERM_SENSOR_CODES.put(MICROPHONE, SensorPrivacyManager.Sensors.MICROPHONE);
+        }
+
+        PERM_BLOCKED_ICON = new ArrayMap<>();
+        PERM_BLOCKED_ICON.put(CAMERA, R.drawable.ic_camera_blocked);
+        PERM_BLOCKED_ICON.put(MICROPHONE, R.drawable.ic_mic_blocked);
+        PERM_BLOCKED_ICON.put(LOCATION, R.drawable.ic_location_blocked);
+
+        PERM_BLOCKED_TITLE = new ArrayMap<>();
+        PERM_BLOCKED_TITLE.put(CAMERA, R.string.blocked_camera_title);
+        PERM_BLOCKED_TITLE.put(MICROPHONE, R.string.blocked_microphone_title);
+        PERM_BLOCKED_TITLE.put(LOCATION, R.string.blocked_location_title);
+
     }
 
     private Utils() {
@@ -1264,5 +1294,49 @@ public final class Utils {
         notificationIntent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivityAsUser(notificationIntent, user);
+    }
+
+    /**
+     * Returns if a card should be shown if the sensor is blocked
+     **/
+    public static boolean shouldDisplayCardIfBlocked(@NonNull String permissionGroupName) {
+        return CAMERA.equals(permissionGroupName) || MICROPHONE.equals(permissionGroupName)
+                || LOCATION.equals(permissionGroupName);
+    }
+
+    /**
+     * Returns the sensor code for a permission
+     **/
+    @RequiresApi(Build.VERSION_CODES.S)
+    public static int getSensorCode(@NonNull String permissionGroupName) {
+        return PERM_SENSOR_CODES.getOrDefault(permissionGroupName, -1);
+    }
+
+    /**
+     * Returns the blocked icon code for a permission
+     **/
+    public static int getBlockedIcon(@NonNull String permissionGroupName) {
+        return PERM_BLOCKED_ICON.getOrDefault(permissionGroupName, -1);
+    }
+
+    /**
+     * Returns the blocked title code for a permission
+     **/
+    public static int getBlockedTitle(@NonNull String permissionGroupName) {
+        return PERM_BLOCKED_TITLE.getOrDefault(permissionGroupName, -1);
+    }
+
+    /**
+     * Returns if the permission group has a background mode, even if the background mode is
+     * introduced in a platform version after the one currently running
+     **/
+    public static boolean hasPermWithBackgroundModeCompat(LightAppPermGroup group) {
+        if (SdkLevel.isAtLeastS()) {
+            return group.getHasPermWithBackgroundMode();
+        }
+        String groupName = group.getPermGroupName();
+        return group.getHasPermWithBackgroundMode()
+                || Manifest.permission_group.CAMERA.equals(groupName)
+                || Manifest.permission_group.MICROPHONE.equals(groupName);
     }
 }

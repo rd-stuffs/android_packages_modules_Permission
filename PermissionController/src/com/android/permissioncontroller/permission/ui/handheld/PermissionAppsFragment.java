@@ -34,6 +34,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.ArrayMap;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -82,6 +83,7 @@ public final class PermissionAppsFragment extends SettingsWithLargeHeader implem
     private static final String LOG_TAG = "PermissionAppsFragment";
     private static final String STORAGE_ALLOWED_FULL = "allowed_storage_full";
     private static final String STORAGE_ALLOWED_SCOPED = "allowed_storage_scoped";
+    private static final String BLOCKED_SENSOR_PREF_KEY = "sensor_card";
     private static final int SHOW_LOAD_DELAY_MS = 200;
 
     private static final int MENU_PERMISSION_USAGE = MENU_HIDE_SYSTEM + 1;
@@ -107,6 +109,7 @@ public final class PermissionAppsFragment extends SettingsWithLargeHeader implem
     private PermissionAppsViewModel mViewModel;
     private PermissionUsages mPermissionUsages;
     private List<AppPermissionUsage> mAppPermissionUsages = new ArrayList<>();
+    private Boolean mSensorStatus;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -155,6 +158,10 @@ public final class PermissionAppsFragment extends SettingsWithLargeHeader implem
             mPermissionUsages.load(null, null, filterTimeBeginMillis, Long.MAX_VALUE,
                     PermissionUsages.USAGE_FLAG_LAST, getActivity().getLoaderManager(),
                     false, false, this, false);
+
+            if (Utils.shouldDisplayCardIfBlocked(mPermGroupName)) {
+                mViewModel.getSensorStatusLiveData().observe(this, this::setSensorStatus);
+            }
         }
     }
 
@@ -225,6 +232,60 @@ public final class PermissionAppsFragment extends SettingsWithLargeHeader implem
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
+    private void setSensorStatus(Boolean sensorStatus) {
+        mSensorStatus = sensorStatus;
+        displaySensorCard();
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private void displaySensorCard() {
+        if (Utils.shouldDisplayCardIfBlocked(mPermGroupName)) {
+            if (mSensorStatus) {
+                setSensorCard();
+            } else {
+                removeSensorCard();
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private void setSensorCard() {
+        CardViewPreference sensorCard = findPreference(BLOCKED_SENSOR_PREF_KEY);
+        if (sensorCard == null) {
+            sensorCard = createSensorCard();
+            getPreferenceScreen().addPreference(sensorCard);
+        }
+        sensorCard.setVisible(true);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private CardViewPreference createSensorCard() {
+        boolean isLocation = Manifest.permission_group.LOCATION.equals(mPermGroupName);
+        Context context = getPreferenceManager().getContext();
+        String action = isLocation ? Settings.ACTION_LOCATION_SOURCE_SETTINGS
+                : Settings.ACTION_PRIVACY_SETTINGS;
+        CardViewPreference sensorCard = new CardViewPreference(context, action);
+        sensorCard.setKey(BLOCKED_SENSOR_PREF_KEY);
+        sensorCard.setIcon(Utils.getBlockedIcon(mPermGroupName));
+        sensorCard.setTitle(Utils.getBlockedTitle(mPermGroupName));
+        boolean isMicrophone = Manifest.permission_group.MICROPHONE.equals(mPermGroupName);
+        int cardSummary =
+                isMicrophone ? R.string.blocked_mic_summary : R.string.blocked_sensor_summary;
+        sensorCard.setSummary(context.getString(cardSummary));
+        sensorCard.setVisible(true);
+        sensorCard.setOrder(-1);
+        return sensorCard;
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private void removeSensorCard() {
+        CardViewPreference sensorCard = findPreference(BLOCKED_SENSOR_PREF_KEY);
+        if (sensorCard != null) {
+            sensorCard.setVisible(false);
+        }
+    }
+
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -267,8 +328,11 @@ public final class PermissionAppsFragment extends SettingsWithLargeHeader implem
         Map<String, Preference> existingPrefs = new ArrayMap<>();
 
         for (int i = 0; i < getPreferenceScreen().getPreferenceCount(); i++) {
-            PreferenceCategory category = (PreferenceCategory)
-                    getPreferenceScreen().getPreference(i);
+            Preference pref = getPreferenceScreen().getPreference(i);
+            if (BLOCKED_SENSOR_PREF_KEY.equals(pref.getKey())) {
+                continue;
+            }
+            PreferenceCategory category = (PreferenceCategory) pref;
             category.setOrderingAsAdded(true);
             int numPreferences = category.getPreferenceCount();
             for (int j = 0; j < numPreferences; j++) {
