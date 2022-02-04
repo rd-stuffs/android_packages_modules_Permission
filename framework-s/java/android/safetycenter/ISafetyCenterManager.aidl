@@ -16,6 +16,8 @@
 
 package android.safetycenter;
 
+import android.safetycenter.IOnSafetyCenterDataChangedListener;
+import android.safetycenter.SafetyCenterData;
 import android.safetycenter.SafetySourceData;
 
 /**
@@ -46,4 +48,24 @@ interface ISafetyCenterManager {
      * Returns whether the SafetyCenter page is enabled.
      */
     boolean isSafetyCenterEnabled();
+
+    /**
+     * Clears all SafetySourceData updates sent to the safety center using sendSafetyCenterUpdate,
+     * for all packages and users.
+     */
+    void clearSafetyCenterData();
+
+    /**
+     * Returns the current SafetyCenterData, assembled from the SafetySourceData from all sources.
+     */
+    SafetyCenterData getSafetyCenterData();
+
+    void addOnSafetyCenterDataChangedListener(in IOnSafetyCenterDataChangedListener listener);
+
+    void removeOnSafetyCenterDataChangedListener(in IOnSafetyCenterDataChangedListener listener);
+
+    /**
+     * Dismisses the issue corresponding to the given issue ID.
+     */
+    void dismissSafetyIssue(in String issueId);
 }
