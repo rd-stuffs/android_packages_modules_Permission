@@ -69,7 +69,7 @@
 
     <permission-set name="sensors">
         <permission name="android.permission.BODY_SENSORS" />
-        <permission name="android.permission.BODY_SENSORS_BACKGROUND" />
+        <permission name="android.permission.BODY_SENSORS_BACKGROUND" minSdkVersion="33" />
     </permission-set>
 
     <permission-set name="storage">
@@ -81,6 +81,10 @@
         <permission name="android.permission.BLUETOOTH_ADVERTISE" minSdkVersion="31" />
         <permission name="android.permission.BLUETOOTH_CONNECT" minSdkVersion="31" />
         <permission name="android.permission.BLUETOOTH_SCAN" minSdkVersion="31" />
+    </permission-set>
+
+    <permission-set name="notifications">
+        <permission name="android.permission.POST_NOTIFICATIONS" minSdkVersion="33" />
     </permission-set>
 
     <role
@@ -220,6 +224,7 @@
             <permission-set name="sms" />
             <permission-set name="microphone" />
             <permission-set name="camera" />
+            <permission-set name="notifications" />
         </permissions>
         <app-op-permissions>
             <app-op-permission name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -308,6 +313,7 @@
             <permission-set name="storage" />
             <permission-set name="microphone" />
             <permission-set name="camera" />
+            <permission-set name="notifications" />
             <permission name="android.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND" minSdkVersion="31" />
         </permissions>
         <app-ops>
@@ -373,6 +379,7 @@
             </activity>
         </required-components>
         <permissions>
+            <permission-set name="notifications" />
             <permission name="android.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND" minSdkVersion="31" />
             <permission name="android.permission.OBSERVE_SENSOR_PRIVACY" minSdkVersion="31" />
         </permissions>
@@ -459,6 +466,9 @@
                 </intent-filter>
             </service>
         </required-components>
+        <permissions>
+            <permission-set name="notifications" />
+        </permissions>
         <app-op-permissions>
             <app-op-permission name="android.permission.SYSTEM_ALERT_WINDOW" />
         </app-op-permissions>
@@ -484,7 +494,7 @@
 
     <role
         name="android.app.role.SYSTEM_AUTOMOTIVE_CLUSTER"
-        behavior="SystemAutomotiveClusterRoleBehavior"
+        behavior="AutomotiveRoleBehavior"
         defaultHolders="config_systemAutomotiveCluster"
         exclusive="true"
         minSdkVersion="31"
@@ -522,6 +532,7 @@
 
     <role
         name="android.app.role.SYSTEM_AUTOMOTIVE_PROJECTION"
+        allowBypassingQualification="true"
         defaultHolders="config_systemAutomotiveProjection"
         exclusive="false"
         minSdkVersion="31"
@@ -569,6 +580,8 @@
             <permission name="android.permission.SET_DEFAULT_ACCOUNT_FOR_CONTACTS"
                 minSdkVersion="33" />
             <permission name="android.permission.REQUEST_COMPANION_PROFILE_AUTOMOTIVE_PROJECTION"
+                minSdkVersion="33" />
+            <permission name="android.permission.MANAGE_SAFETY_CENTER"
                 minSdkVersion="33" />
         </permissions>
     </role>
@@ -634,6 +647,7 @@
         visible="false" >
         <permissions>
             <permission name="android.permission.ACCESS_INSTANT_APPS"/>
+            <permission name="android.permission.START_CROSS_PROFILE_ACTIVITIES" minSdkVersion="33"/>
             <permission name="android.permission.SUSPEND_APPS"/>
             <permission name="android.permission.SYSTEM_APPLICATION_OVERLAY"/>
         </permissions>
@@ -802,6 +816,7 @@
             <permission name="android.permission.MODIFY_PHONE_STATE" />
             <permission name="android.permission.RECORD_AUDIO" />
             <permission name="android.permission.SYSTEM_APPLICATION_OVERLAY" />
+            <permission name="android.permission.SET_SYSTEM_AUDIO_CAPTION" />
         </permissions>
     </role>
 
@@ -982,6 +997,7 @@
         systemOnly="true"
         visible="false">
         <permissions>
+            <permission-set name="notifications" />
             <permission name="android.permission.MANAGE_SENSOR_PRIVACY" />
             <permission name="android.permission.OBSERVE_SENSOR_PRIVACY" />
         </permissions>
@@ -1004,8 +1020,13 @@
         </permissions>
     </role>
 
+    <!---
+      ~ A role for the companion device package that create and manage connections to connected
+      ~ devices and perform app streaming to the devices.
+      -->
     <role
         name="android.app.role.COMPANION_DEVICE_APP_STREAMING"
+        allowBypassingQualification="true"
         behavior="CompanionDeviceAppStreamingRoleBehavior"
         description="@string/role_app_streaming_description"
         exclusive="false"
@@ -1013,6 +1034,9 @@
         systemOnly="true"
         visible="false">
         <permissions>
+            <permission-set name="notifications" />
+            <!-- For capturing audio from the app on the device. -->
+            <permission name="android.permission.RECORD_AUDIO" />
             <permission name="android.permission.CREATE_VIRTUAL_DEVICE" minSdkVersion="33" />
 
             <!--TODO(b/201605314) For calling Telecom framework API for audio streaming-->
@@ -1087,6 +1111,25 @@
         visible="false">
         <permissions>
             <permission name="android.permission.GET_HISTORICAL_APP_OPS_STATS" />
+        </permissions>
+    </role>
+
+    <!---
+      ~ A role for the system package that handles syncing calendar from another device on
+      ~ Automotive.
+      -->
+    <role
+        name="android.app.role.SYSTEM_AUTOMOTIVE_CALENDAR_SYNC_MANAGER"
+        behavior="AutomotiveRoleBehavior"
+        defaultHolders="config_systemAutomotiveCalendarSyncManager"
+        exclusive="true"
+        minSdkVersion="33"
+        static="true"
+        systemOnly="true"
+        visible="false">
+        <permissions>
+            <permission name="android.permission.READ_CALENDAR" />
+            <permission name="android.permission.WRITE_CALENDAR" />
         </permissions>
     </role>
 </roles>

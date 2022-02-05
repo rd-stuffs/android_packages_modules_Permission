@@ -16,6 +16,7 @@
 
 package com.android.safetycenter;
 
+import static android.Manifest.permission.MANAGE_SAFETY_CENTER;
 import static android.Manifest.permission.READ_SAFETY_CENTER_STATUS;
 import static android.Manifest.permission.SEND_SAFETY_CENTER_UPDATE;
 import static android.os.Build.VERSION_CODES.TIRAMISU;
@@ -30,7 +31,10 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Binder;
 import android.provider.DeviceConfig;
+import android.safetycenter.IOnSafetyCenterDataChangedListener;
 import android.safetycenter.ISafetyCenterManager;
+import android.safetycenter.SafetyCenterData;
+import android.safetycenter.SafetyCenterStatus;
 import android.safetycenter.SafetySourceData;
 
 import androidx.annotation.Keep;
@@ -41,7 +45,9 @@ import com.android.internal.annotations.GuardedBy;
 import com.android.permission.util.PermissionUtils;
 import com.android.server.SystemService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -66,6 +72,10 @@ public final class SafetyCenterService extends SystemService {
 
     @NonNull
     private final AppOpsManager mAppOpsManager;
+
+    @NonNull
+    private final List<IOnSafetyCenterDataChangedListener> mSafetyCenterDataChangedListeners =
+            new ArrayList<>();
 
     public SafetyCenterService(@NonNull Context context) {
         super(context);
@@ -175,6 +185,49 @@ public final class SafetyCenterService extends SystemService {
             }
         }
 
+        @Override
+        public void clearSafetyCenterData() {
+            getContext().enforceCallingOrSelfPermission(MANAGE_SAFETY_CENTER,
+                    "clearSafetyCenterData");
+
+            synchronized (mLock) {
+                mSafetySourceDataForKey.clear();
+            }
+        }
+
+        @Override
+        public SafetyCenterData getSafetyCenterData() {
+            // TODO(b/203098016): Implement this with real data.
+            return new SafetyCenterData(
+                    new SafetyCenterStatus.Builder()
+                            .setSeverityLevel(
+                                    SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_RECOMMENDATION)
+                            .setTitle("Safety Center Unimplemented")
+                            .setSummary("This should be implemented.")
+                            .build(),
+                    new ArrayList<>(),
+                    new ArrayList<>());
+        }
+
+        @Override
+        public void addOnSafetyCenterDataChangedListener(
+                IOnSafetyCenterDataChangedListener listener) {
+            // TODO(b/203098016): Protect this with a permission so only PC can use.
+            mSafetyCenterDataChangedListeners.add(listener);
+        }
+
+        @Override
+        public void removeOnSafetyCenterDataChangedListener(
+                IOnSafetyCenterDataChangedListener listener) {
+            // TODO(b/203098016): Protect this with a permission so only PC can use.
+            mSafetyCenterDataChangedListeners.remove(listener);
+        }
+
+        @Override
+        public void dismissSafetyIssue(String issueId) {
+            // TODO(b/203098016): Implement this with real data.
+        }
+
         private boolean getSafetyCenterConfigValue() {
             return getContext().getResources().getBoolean(Resources.getSystem().getIdentifier(
                     "config_enableSafetyCenter",
@@ -184,9 +237,9 @@ public final class SafetyCenterService extends SystemService {
 
         private void enforceIsSafetyCenterEnabledPermissions(@NonNull String message) {
             if (getContext().checkCallingOrSelfPermission(READ_SAFETY_CENTER_STATUS)
-                        != PackageManager.PERMISSION_GRANTED
+                    != PackageManager.PERMISSION_GRANTED
                     && getContext().checkCallingOrSelfPermission(SEND_SAFETY_CENTER_UPDATE)
-                        != PackageManager.PERMISSION_GRANTED) {
+                    != PackageManager.PERMISSION_GRANTED) {
                 throw new SecurityException(message + " requires "
                         + READ_SAFETY_CENTER_STATUS + " or "
                         + SEND_SAFETY_CENTER_UPDATE);
