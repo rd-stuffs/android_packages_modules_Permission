@@ -752,7 +752,13 @@ public final class PermissionControllerServiceImpl extends PermissionControllerL
     }
 
     @Override
-    public void onSelfRevokePermissions(@NonNull String packageName,
+    public void onGetHibernationEligibility(@NonNull String packageName,
+            @NonNull IntConsumer callback) {
+        mServiceModel.onGetHibernationEligibility(packageName, callback);
+    }
+
+    @Override
+    public void onRevokeOwnPermissionsOnKill(@NonNull String packageName,
             @NonNull List<String> permissions, @NonNull Runnable callback) {
         PackageInfo pkgInfo = getPkgInfo(packageName);
         if (pkgInfo == null) {
