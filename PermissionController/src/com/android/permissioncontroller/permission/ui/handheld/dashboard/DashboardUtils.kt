@@ -25,6 +25,7 @@ import android.util.Pair
 import com.android.modules.utils.build.SdkLevel
 import com.android.permissioncontroller.R
 import com.android.permissioncontroller.permission.model.AppPermissionUsage.GroupUsage
+import com.android.permissioncontroller.permission.utils.StringUtils
 import java.util.Locale
 
 /** Whether to show the Permissions Hub.  */
@@ -41,6 +42,9 @@ const val PROPERTY_LOCATION_ACCURACY_ENABLED = "location_accuracy_enabled"
 
 /** Whether subattribution is enabled in Permissions Hub. */
 const val PROPERTY_PERMISSIONS_HUB_SUBATTRIBUTION_ENABLED = "permissions_hub_subattribution_enabled"
+
+/** Whether to show 7-day toggle in privacy hub.  */
+private const val PRIVACY_DASHBOARD_7_DAY_TOGGLE = "privacy_dashboard_7_day_toggle"
 
 /* Default location precision */
 const val PROPERTY_LOCATION_PRECISION = "location_precision"
@@ -66,6 +70,16 @@ fun isPermissionsHub2FlagEnabled(): Boolean {
  */
 fun shouldShowPermissionsDashboard(): Boolean {
     return isPermissionsHub2FlagEnabled()
+}
+
+/**
+ * Whether we should enable the 7-day toggle in privacy dashboard
+ *
+ * @return whether the flag is enabled
+ */
+fun is7DayToggleEnabled(): Boolean {
+    return DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
+            PRIVACY_DASHBOARD_7_DAY_TOGGLE, false)
 }
 
 /**
@@ -201,14 +215,14 @@ fun getUsageDurationString(context: Context, groupUsage: GroupUsage?): String? {
 fun getTimeDiffStr(context: Context, duration: Long): String {
     val timeDiffAndUnit = calculateTimeDiffAndUnit(duration)
     return when (timeDiffAndUnit.second) {
-        SECONDS -> context.resources.getQuantityString(R.plurals.seconds,
-                timeDiffAndUnit.first.toInt(), timeDiffAndUnit.first)
-        MINUTES -> context.resources.getQuantityString(R.plurals.minutes,
-                timeDiffAndUnit.first.toInt(), timeDiffAndUnit.first)
-        HOURS -> context.resources.getQuantityString(R.plurals.hours,
-                timeDiffAndUnit.first.toInt(), timeDiffAndUnit.first)
-        else -> context.resources.getQuantityString(R.plurals.days,
-                timeDiffAndUnit.first.toInt(), timeDiffAndUnit.first)
+        SECONDS -> StringUtils.getIcuPluralsString(context,
+            R.string.seconds, timeDiffAndUnit.first.toInt())
+        MINUTES -> StringUtils.getIcuPluralsString(context,
+            R.string.minutes, timeDiffAndUnit.first.toInt())
+        HOURS -> StringUtils.getIcuPluralsString(context,
+            R.string.hours, timeDiffAndUnit.first.toInt())
+        else -> StringUtils.getIcuPluralsString(context,
+            R.string.days, timeDiffAndUnit.first.toInt())
     }
 }
 
@@ -219,14 +233,14 @@ fun getTimeDiffStr(context: Context, duration: Long): String {
 fun getDurationUsedStr(context: Context, duration: Long): String {
     val timeDiffAndUnit = calculateTimeDiffAndUnit(duration)
     return when (timeDiffAndUnit.second) {
-        SECONDS -> context.resources.getQuantityString(R.plurals.duration_used_seconds,
-                timeDiffAndUnit.first.toInt(), timeDiffAndUnit.first)
-        MINUTES -> context.resources.getQuantityString(R.plurals.duration_used_minutes,
-                timeDiffAndUnit.first.toInt(), timeDiffAndUnit.first)
-        HOURS -> context.resources.getQuantityString(R.plurals.duration_used_hours,
-                timeDiffAndUnit.first.toInt(), timeDiffAndUnit.first)
-        else -> context.resources.getQuantityString(R.plurals.duration_used_days,
-                timeDiffAndUnit.first.toInt(), timeDiffAndUnit.first)
+        SECONDS -> StringUtils.getIcuPluralsString(context,
+            R.string.duration_used_seconds, timeDiffAndUnit.first.toInt())
+        MINUTES -> StringUtils.getIcuPluralsString(context,
+            R.string.duration_used_minutes, timeDiffAndUnit.first.toInt())
+        HOURS -> StringUtils.getIcuPluralsString(context,
+            R.string.duration_used_hours, timeDiffAndUnit.first.toInt())
+        else -> StringUtils.getIcuPluralsString(context,
+            R.string.duration_used_days, timeDiffAndUnit.first.toInt())
     }
 }
 

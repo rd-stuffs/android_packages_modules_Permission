@@ -174,7 +174,8 @@ object KotlinUtils {
      * @return The permission group's icon, the ic_perm_device_info icon if the group has no icon,
      * or the group does not exist
      */
-    fun getPermGroupIcon(context: Context, groupName: String): Drawable? {
+    @JvmOverloads
+    fun getPermGroupIcon(context: Context, groupName: String, tint: Int? = null): Drawable? {
         val groupInfo = Utils.getGroupInfo(groupName, context)
         var icon: Drawable? = null
         if (groupInfo != null && groupInfo.icon != 0) {
@@ -186,7 +187,12 @@ object KotlinUtils {
             icon = context.getDrawable(R.drawable.ic_perm_device_info)
         }
 
-        return Utils.applyTint(context, icon, android.R.attr.colorControlNormal)
+        if (tint == null) {
+            return Utils.applyTint(context, icon, android.R.attr.colorControlNormal)
+        }
+
+        icon?.setTint(tint)
+        return icon
     }
 
     /**
@@ -508,6 +514,18 @@ object KotlinUtils {
                 val (newPerm, shouldKill) = grantRuntimePermission(app, perm, isOneTime, group)
                 newPerms[newPerm.name] = newPerm
                 shouldKillForAnyPermission = shouldKillForAnyPermission || shouldKill
+            }
+        }
+        if (!newPerms.isEmpty()) {
+            val user = UserHandle.getUserHandleForUid(group.packageInfo.uid)
+            for (groupPerm in group.allPermissions.values) {
+                var permFlags = groupPerm!!.flags
+                permFlags = permFlags.clearFlag(PackageManager.FLAG_PERMISSION_AUTO_REVOKED)
+                if (groupPerm!!.flags != permFlags) {
+                    app.packageManager.updatePermissionFlags(groupPerm!!.name,
+                        group.packageInfo.packageName, PERMISSION_CONTROLLER_CHANGED_FLAG_MASK,
+                        permFlags, user)
+                }
             }
         }
 

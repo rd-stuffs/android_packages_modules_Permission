@@ -62,8 +62,6 @@ import android.content.pm.PermissionInfo;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.SensorPrivacyManager;
 import android.os.Build;
@@ -112,18 +110,20 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.Set;
 
-import kotlin.Pair;
+import kotlin.Triple;
 
 public final class Utils {
 
     @Retention(SOURCE)
     @IntDef(value = {LAST_24H_SENSOR_TODAY, LAST_24H_SENSOR_YESTERDAY,
-            LAST_24H_CONTENT_PROVIDER, NOT_IN_LAST_24H})
+            LAST_24H_CONTENT_PROVIDER, NOT_IN_LAST_7D})
     public @interface AppPermsLastAccessType {}
     public static final int LAST_24H_SENSOR_TODAY = 1;
     public static final int LAST_24H_SENSOR_YESTERDAY = 2;
     public static final int LAST_24H_CONTENT_PROVIDER = 3;
-    public static final int NOT_IN_LAST_24H = 4;
+    public static final int LAST_7D_SENSOR = 4;
+    public static final int LAST_7D_CONTENT_PROVIDER = 5;
+    public static final int NOT_IN_LAST_7D = 6;
 
     private static final List<String> SENSOR_DATA_PERMISSIONS = List.of(
             Manifest.permission_group.LOCATION,
@@ -163,6 +163,17 @@ public final class Utils {
     private static final String PROPERTY_LOCATION_ACCESS_CHECK_ENABLED =
             "location_access_check_enabled";
 
+    /** The time an app needs to be unused in order to be hibernated */
+    public static final String PROPERTY_PERMISSION_DECISIONS_CHECK_OLD_FREQUENCY_MILLIS =
+            "permission_decisions_check_old_frequency_millis";
+
+    /** The time an app needs to be unused in order to be hibernated */
+    public static final String PROPERTY_PERMISSION_DECISIONS_MAX_DATA_AGE_MILLIS =
+            "permission_decisions_max_data_age_millis";
+
+    /** Whether or not warning banner is displayed when device sensors are off **/
+    public static final String PROPERTY_WARNING_BANNER_DISPLAY_ENABLED = "warning_banner_enabled";
+
     /** All permission whitelists. */
     public static final int FLAGS_PERMISSION_WHITELIST_ALL =
             PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM
@@ -195,6 +206,7 @@ public final class Utils {
     private static final ArrayMap<String, Integer> PERM_GROUP_BACKGROUND_REQUEST_DETAIL_RES;
     private static final ArrayMap<String, Integer> PERM_GROUP_UPGRADE_REQUEST_RES;
     private static final ArrayMap<String, Integer> PERM_GROUP_UPGRADE_REQUEST_DETAIL_RES;
+    private static final ArrayMap<String, Integer> PERM_GROUP_CONTINUE_REQUEST_RES;
 
     /** Permission -> Sensor codes */
     private static final ArrayMap<String, Integer> PERM_SENSOR_CODES;
@@ -297,6 +309,7 @@ public final class Utils {
 
         if (SdkLevel.isAtLeastT()) {
             PLATFORM_PERMISSIONS.put(Manifest.permission.POST_NOTIFICATIONS, NOTIFICATIONS);
+            PLATFORM_PERMISSIONS.put(Manifest.permission.BODY_SENSORS_BACKGROUND, SENSORS);
         }
 
         PLATFORM_PERMISSION_GROUPS = new ArrayMap<>();
@@ -334,6 +347,7 @@ public final class Utils {
         PERM_GROUP_REQUEST_RES.put(CALL_LOG, R.string.permgrouprequest_calllog);
         PERM_GROUP_REQUEST_RES.put(PHONE, R.string.permgrouprequest_phone);
         PERM_GROUP_REQUEST_RES.put(SENSORS, R.string.permgrouprequest_sensors);
+        PERM_GROUP_REQUEST_RES.put(NOTIFICATIONS, R.string.permgrouprequest_notifications);
 
         PERM_GROUP_REQUEST_DETAIL_RES = new ArrayMap<>();
         PERM_GROUP_REQUEST_DETAIL_RES.put(LOCATION, R.string.permgrouprequestdetail_location);
@@ -347,6 +361,8 @@ public final class Utils {
                 .put(MICROPHONE, R.string.permgroupbackgroundrequest_microphone);
         PERM_GROUP_BACKGROUND_REQUEST_RES
                 .put(CAMERA, R.string.permgroupbackgroundrequest_camera);
+        PERM_GROUP_BACKGROUND_REQUEST_RES
+                .put(SENSORS, R.string.permgroupbackgroundrequest_sensors);
 
         PERM_GROUP_BACKGROUND_REQUEST_DETAIL_RES = new ArrayMap<>();
         PERM_GROUP_BACKGROUND_REQUEST_DETAIL_RES
@@ -355,11 +371,14 @@ public final class Utils {
                 .put(MICROPHONE, R.string.permgroupbackgroundrequestdetail_microphone);
         PERM_GROUP_BACKGROUND_REQUEST_DETAIL_RES
                 .put(CAMERA, R.string.permgroupbackgroundrequestdetail_camera);
+        PERM_GROUP_BACKGROUND_REQUEST_DETAIL_RES
+                .put(SENSORS, R.string.permgroupbackgroundrequestdetail_sensors);
 
         PERM_GROUP_UPGRADE_REQUEST_RES = new ArrayMap<>();
         PERM_GROUP_UPGRADE_REQUEST_RES.put(LOCATION, R.string.permgroupupgraderequest_location);
         PERM_GROUP_UPGRADE_REQUEST_RES.put(MICROPHONE, R.string.permgroupupgraderequest_microphone);
         PERM_GROUP_UPGRADE_REQUEST_RES.put(CAMERA, R.string.permgroupupgraderequest_camera);
+        PERM_GROUP_UPGRADE_REQUEST_RES.put(SENSORS, R.string.permgroupupgraderequest_sensors);
 
         PERM_GROUP_UPGRADE_REQUEST_DETAIL_RES = new ArrayMap<>();
         PERM_GROUP_UPGRADE_REQUEST_DETAIL_RES
@@ -368,6 +387,12 @@ public final class Utils {
                 .put(MICROPHONE, R.string.permgroupupgraderequestdetail_microphone);
         PERM_GROUP_UPGRADE_REQUEST_DETAIL_RES
                 .put(CAMERA, R.string.permgroupupgraderequestdetail_camera);
+        PERM_GROUP_UPGRADE_REQUEST_DETAIL_RES
+                .put(SENSORS,  R.string.permgroupupgraderequestdetail_sensors);
+
+        PERM_GROUP_CONTINUE_REQUEST_RES = new ArrayMap<>();
+        PERM_GROUP_CONTINUE_REQUEST_RES
+                .put(NOTIFICATIONS, R.string.permgrouprequestcontinue_notifications);
 
         PERM_SENSOR_CODES = new ArrayMap<>();
         if (SdkLevel.isAtLeastS()) {
@@ -978,9 +1003,12 @@ public final class Utils {
             @NonNull ApplicationInfo appInfo) {
         UserHandle user = UserHandle.getUserHandleForUid(appInfo.uid);
         try (IconFactory iconFactory = IconFactory.obtain(context)) {
-            Bitmap iconBmp = iconFactory.createBadgedIconBitmap(
-                    appInfo.loadUnbadgedIcon(context.getPackageManager()), user, false).icon;
-            return new BitmapDrawable(context.getResources(), iconBmp);
+            return iconFactory.createBadgedIconBitmap(
+                    appInfo.loadUnbadgedIcon(context.getPackageManager()),
+                    new IconFactory.IconOptions()
+                            .setShrinkNonAdaptiveIcons(false)
+                            .setUser(user))
+                    .newIcon(context);
         }
     }
 
@@ -1147,6 +1175,15 @@ public final class Utils {
     }
 
     /**
+     * The resource id for the "continue allowing" message for a permission group
+     * @param groupName Permission group name
+     * @return The id or 0 if the permission group doesn't exist or have a message
+     */
+    public static int getContinueRequest(String groupName) {
+        return PERM_GROUP_CONTINUE_REQUEST_RES.getOrDefault(groupName, 0);
+    }
+
+    /**
      * Checks whether a package has an active one-time permission according to the system server's
      * flags
      *
@@ -1240,28 +1277,49 @@ public final class Utils {
     /**
      * Get the timestamp and lastAccessType for the summary text
      * in app permission groups and permission apps screens
+     * @return Triple<String, Integer, String> with the first being the formatted time
+     * the second being lastAccessType and the third being the formatted date.
      */
-    public static Pair<String, Integer> getPermissionLastAccessSummaryTimestamp(
+    public static Triple<String, Integer, String> getPermissionLastAccessSummaryTimestamp(
             Long lastAccessTime, Context context, String groupName) {
         long midnightToday = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).toEpochSecond()
                 * 1000L;
+        long midnightYesterday = ZonedDateTime.now().minusDays(1).truncatedTo(ChronoUnit.DAYS)
+                .toEpochSecond() * 1000L;
+        long yesterdayAtThisTime = ZonedDateTime.now().minusDays(1).toEpochSecond() * 1000L;
 
         boolean isLastAccessToday = lastAccessTime != null
                 && midnightToday <= lastAccessTime;
+        boolean isLastAccessWithinPast24h = lastAccessTime != null
+                && yesterdayAtThisTime <= lastAccessTime;
+        boolean isLastAccessTodayOrYesterday = lastAccessTime != null
+                && midnightYesterday <= lastAccessTime;
+
         String lastAccessTimeFormatted = "";
-        @AppPermsLastAccessType int lastAccessType = NOT_IN_LAST_24H;
+        String lastAccessDateFormatted = "";
+        @AppPermsLastAccessType int lastAccessType = NOT_IN_LAST_7D;
 
         if (lastAccessTime != null) {
             lastAccessTimeFormatted = DateFormat.getTimeFormat(context)
                     .format(lastAccessTime);
+            lastAccessDateFormatted = DateFormat.getDateFormat(context)
+                    .format(lastAccessTime);
 
-            lastAccessType = !SENSOR_DATA_PERMISSIONS.contains(groupName)
-                    ? LAST_24H_CONTENT_PROVIDER : isLastAccessToday
-                    ? LAST_24H_SENSOR_TODAY :
-                    LAST_24H_SENSOR_YESTERDAY;
+            if (!SENSOR_DATA_PERMISSIONS.contains(groupName)) {
+                // For content providers we show either the last access is within
+                // past 24 hours or past 7 days
+                lastAccessType = isLastAccessWithinPast24h
+                        ? LAST_24H_CONTENT_PROVIDER : LAST_7D_CONTENT_PROVIDER;
+            } else {
+                // For sensor data permissions we show if the last access
+                // is today, yesterday or older than yesterday
+                lastAccessType = isLastAccessToday
+                        ? LAST_24H_SENSOR_TODAY : isLastAccessTodayOrYesterday
+                        ? LAST_24H_SENSOR_YESTERDAY : LAST_7D_SENSOR;
+            }
         }
 
-        return new Pair<>(lastAccessTimeFormatted, lastAccessType);
+        return new Triple<>(lastAccessTimeFormatted, lastAccessType, lastAccessDateFormatted);
     }
 
     /**
@@ -1300,8 +1358,10 @@ public final class Utils {
      * Returns if a card should be shown if the sensor is blocked
      **/
     public static boolean shouldDisplayCardIfBlocked(@NonNull String permissionGroupName) {
-        return CAMERA.equals(permissionGroupName) || MICROPHONE.equals(permissionGroupName)
-                || LOCATION.equals(permissionGroupName);
+        return DeviceConfig.getBoolean(
+                DeviceConfig.NAMESPACE_PRIVACY, PROPERTY_WARNING_BANNER_DISPLAY_ENABLED, false) && (
+                CAMERA.equals(permissionGroupName) || MICROPHONE.equals(permissionGroupName)
+                        || LOCATION.equals(permissionGroupName));
     }
 
     /**

@@ -37,6 +37,7 @@ import androidx.core.util.Consumer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.android.permissioncontroller.Constants
+import com.android.permissioncontroller.DeviceUtils
 import com.android.permissioncontroller.PermissionControllerStatsLog
 import com.android.permissioncontroller.PermissionControllerStatsLog.GRANT_PERMISSIONS_ACTIVITY_BUTTON_ACTIONS
 import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_GRANT_REQUEST_RESULT_REPORTED__RESULT__AUTO_DENIED
@@ -53,6 +54,7 @@ import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_
 import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_GRANT_REQUEST_RESULT_REPORTED__RESULT__USER_GRANTED_IN_SETTINGS
 import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_GRANT_REQUEST_RESULT_REPORTED__RESULT__USER_GRANTED_ONE_TIME
 import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_GRANT_REQUEST_RESULT_REPORTED__RESULT__USER_IGNORED
+import com.android.permissioncontroller.auto.DrivingDecisionReminderService
 import com.android.permissioncontroller.permission.data.LightAppPermGroupLiveData
 import com.android.permissioncontroller.permission.data.LightPackageInfoLiveData
 import com.android.permissioncontroller.permission.data.PackagePermissionsLiveData
@@ -61,6 +63,7 @@ import com.android.permissioncontroller.permission.data.get
 import com.android.permissioncontroller.permission.model.livedatatypes.LightAppPermGroup
 import com.android.permissioncontroller.permission.model.livedatatypes.LightPackageInfo
 import com.android.permissioncontroller.permission.model.livedatatypes.LightPermGroupInfo
+import com.android.permissioncontroller.permission.service.RecentPermissionDecisionsStorage
 import com.android.permissioncontroller.permission.ui.AutoGrantPermissionsNotifier
 import com.android.permissioncontroller.permission.ui.GrantPermissionsActivity
 import com.android.permissioncontroller.permission.ui.GrantPermissionsActivity.ALLOW_BUTTON
@@ -87,11 +90,11 @@ import com.android.permissioncontroller.permission.ui.GrantPermissionsViewHandle
 import com.android.permissioncontroller.permission.ui.GrantPermissionsViewHandler.DENIED_DO_NOT_ASK_AGAIN
 import com.android.permissioncontroller.permission.ui.GrantPermissionsViewHandler.GRANTED_ALWAYS
 import com.android.permissioncontroller.permission.ui.GrantPermissionsViewHandler.GRANTED_FOREGROUND_ONLY
-import com.android.permissioncontroller.permission.ui.handheld.dashboard.getDefaultPrecision
-import com.android.permissioncontroller.permission.ui.handheld.dashboard.isLocationAccuracyEnabled
 import com.android.permissioncontroller.permission.ui.ManagePermissionsActivity
 import com.android.permissioncontroller.permission.ui.ManagePermissionsActivity.EXTRA_RESULT_PERMISSION_INTERACTED
 import com.android.permissioncontroller.permission.ui.ManagePermissionsActivity.EXTRA_RESULT_PERMISSION_RESULT
+import com.android.permissioncontroller.permission.ui.handheld.dashboard.getDefaultPrecision
+import com.android.permissioncontroller.permission.ui.handheld.dashboard.isLocationAccuracyEnabled
 import com.android.permissioncontroller.permission.utils.AdminRestrictedPermissionsUtils
 import com.android.permissioncontroller.permission.utils.KotlinUtils
 import com.android.permissioncontroller.permission.utils.SafetyNetLogger
@@ -138,6 +141,8 @@ class GrantPermissionsViewModel(
     // All permissions that could possibly be affected by the provided requested permissions, before
     // filtering system fixed, auto grant, etc.
     private var unfilteredAffectedPermissions = requestedPermissions
+
+    private val splitPermissionTargetSdkMap = mutableMapOf<String, Int>()
 
     /**
      * A class which represents a correctly requested permission group, and the buttons and messages
@@ -192,6 +197,11 @@ class GrantPermissionsViewModel(
                 getAppPermGroups(groups.toMutableMap().apply {
                         remove(PackagePermissionsLiveData.NON_RUNTIME_NORMAL_PERMS)
                     })
+
+                for (splitPerm in app.getSystemService(
+                        PermissionManager::class.java)!!.splitPermissions) {
+                    splitPermissionTargetSdkMap[splitPerm.splitPermission] = splitPerm.targetSdk
+                }
             }
         }
 
@@ -238,7 +248,7 @@ class GrantPermissionsViewModel(
                     for ((key, state) in states) {
                         val allAffectedGranted = state.affectedPermissions.all { perm ->
                             appPermGroup.permissions[perm]?.isGrantedIncludingAppOp == true
-                        }
+                        } && !appPermGroup.isRuntimePermReviewRequired
                         if (allAffectedGranted) {
                             groupStates[key]!!.state = STATE_ALLOWED
                         }
@@ -263,17 +273,18 @@ class GrantPermissionsViewModel(
                 if (groupState.state != STATE_UNKNOWN) {
                     continue
                 }
-
                 val fgState = groupStates[groupName to false]
                 val bgState = groupStates[groupName to true]
                 var needFgPermissions = false
                 var needBgPermissions = false
                 var isFgUserSet = false
                 var isBgUserSet = false
-
+                var minSdkForOrderedSplitPermissions = Build.VERSION_CODES.R
                 if (fgState?.group != null) {
                     val fgGroup = fgState.group
                     for (perm in fgState.affectedPermissions) {
+                        minSdkForOrderedSplitPermissions = maxOf(minSdkForOrderedSplitPermissions,
+                                splitPermissionTargetSdkMap.getOrDefault(perm, 0))
                         if (fgGroup.permissions[perm]?.isGrantedIncludingAppOp == false) {
                             // If any of the requested permissions is not granted,
                             // needFgPermissions = true
@@ -286,7 +297,6 @@ class GrantPermissionsViewModel(
                         }
                     }
                 }
-
                 if (bgState?.group?.background?.isGranted == false) {
                     needBgPermissions = true
                     isBgUserSet = bgState.group.background.isUserSet
@@ -297,12 +307,16 @@ class GrantPermissionsViewModel(
                 buttonVisibilities[DENY_BUTTON] = true
                 buttonVisibilities[ALLOW_ONE_TIME_BUTTON] =
                     Utils.supportsOneTimeGrant(groupName)
-                var message = RequestMessage.FG_MESSAGE
+                var message = if (groupState.group.isRuntimePermReviewRequired) {
+                    RequestMessage.CONTINUE_MESSAGE
+                } else {
+                    RequestMessage.FG_MESSAGE
+                }
                 // Whether or not to use the foreground, background, or no detail message.
                 // null ==
                 var detailMessage = RequestMessage.NO_MESSAGE
-
-                if (groupState.group.packageInfo.targetSdkVersion >= Build.VERSION_CODES.R) {
+                if (groupState.group.packageInfo.targetSdkVersion >=
+                        minSdkForOrderedSplitPermissions) {
                     if (isBackground || Utils.hasPermWithBackgroundModeCompat(groupState.group)) {
                         if (needFgPermissions) {
                             if (needBgPermissions) {
@@ -624,6 +638,15 @@ class GrantPermissionsViewModel(
             // Skip showing groups that we know cannot be granted.
             return false
         } else if (subGroup.isUserFixed) {
+            if (perm == ACCESS_COARSE_LOCATION) {
+                val coarsePerm = group.permissions[perm]
+                if (coarsePerm != null && !coarsePerm.isUserFixed) {
+                    // If the location group is user fixed but ACCESS_COARSE_LOCATION is not, then
+                    // ACCESS_FINE_LOCATION must be user fixed. In this case ACCESS_COARSE_LOCATION
+                    // is still grantable.
+                    return true
+                }
+            }
             reportRequestResult(perm,
                 PERMISSION_GRANT_REQUEST_RESULT_REPORTED__RESULT__IGNORED_USER_FIXED)
             return false
@@ -665,8 +688,9 @@ class GrantPermissionsViewModel(
             return STATE_SKIPPED
         }
 
-        if (isBackground && group.background.isGranted ||
-            !isBackground && group.foreground.isGranted) {
+        if ((isBackground && group.background.isGranted ||
+            !isBackground && group.foreground.isGranted) &&
+            !group.isRuntimePermReviewRequired) {
             // If FINE location is not granted, do not grant it automatically when COARSE
             // location is already granted.
             if (group.permGroupName == LOCATION &&
@@ -898,6 +922,23 @@ class GrantPermissionsViewModel(
         reportRequestResult(groupState.affectedPermissions, result)
         // group state has changed, reload liveData
         requestInfosLiveData.update()
+        RecentPermissionDecisionsStorage.recordPermissionDecision(app.applicationContext,
+            packageName, groupState.group.permGroupName, granted)
+        if (granted) {
+            startDrivingDecisionReminderServiceIfNecessary(groupState.group.permGroupName)
+        }
+    }
+
+    /**
+     * When distraction optimization is required (the vehicle is in motion), the user may want to
+     * review their permission grants when they are less distracted.
+     */
+    private fun startDrivingDecisionReminderServiceIfNecessary(permGroupName: String) {
+        if (!DeviceUtils.isAuto(app.applicationContext)) {
+            return
+        }
+        DrivingDecisionReminderService.startServiceIfCurrentlyRestricted(
+            Utils.getUserContext(app, user), packageName, permGroupName)
     }
 
     private fun getGroupWithPerm(
@@ -1174,7 +1215,8 @@ class GrantPermissionsViewModel(
             UPGRADE_MESSAGE(2),
             NO_MESSAGE(3),
             FG_FINE_LOCATION_MESSAGE(4),
-            FG_COARSE_LOCATION_MESSAGE(5)
+            FG_COARSE_LOCATION_MESSAGE(5),
+            CONTINUE_MESSAGE(6);
         }
     }
 }

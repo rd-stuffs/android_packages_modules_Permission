@@ -749,6 +749,12 @@ public final class AppPermissionGroup implements Comparable<AppPermissionGroup> 
                 return true;
             }
         }
+        if (mBackgroundPermissions != null) {
+            // If asOneTime is true and none of the foreground permissions are one-time, but some
+            // background permissions are, then we still want to return true.
+            return mBackgroundPermissions.areRuntimePermissionsGranted(filterPermissions,
+                    asOneTime);
+        }
         return false;
     }
 
@@ -915,6 +921,9 @@ public final class AppPermissionGroup implements Comparable<AppPermissionGroup> 
                     if (permission.isUserSet()) {
                         permission.setUserSet(false);
                     }
+                }
+                if (permission.isReviewRequired()) {
+                    permission.unsetReviewRequired();
                 }
             } else {
                 // Legacy apps cannot have a not granted permission but just in case.
@@ -1313,6 +1322,16 @@ public final class AppPermissionGroup implements Comparable<AppPermissionGroup> 
             Permission permission = mPermissions.valueAt(i);
             if (permission.isOneTime()) {
                 return true;
+            }
+        }
+        if (mBackgroundPermissions != null) {
+            ArrayList<Permission> bgPerms = mBackgroundPermissions.getPermissions();
+            final int bgPermissionCount = bgPerms.size();
+            for (int i = 0; i < bgPermissionCount; i++) {
+                Permission permission = bgPerms.get(i);
+                if (permission.isOneTime()) {
+                    return true;
+                }
             }
         }
         return false;

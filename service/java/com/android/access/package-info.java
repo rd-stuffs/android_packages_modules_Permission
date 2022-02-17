@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package android.safetycenter;
-
 /**
- * Parcelable AIDL SafetyIssueData.
- *
  * @hide
+ * TODO(b/146466118) remove this javadoc tag
  */
-parcelable SafetyIssueData;
+@android.annotation.Hide
+package com.android.access;

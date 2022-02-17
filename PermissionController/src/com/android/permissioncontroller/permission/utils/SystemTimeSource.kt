@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.permissioncontroller.safetycenter
 
-import android.annotation.SuppressLint
-import android.app.Activity
-import android.os.Bundle
-import android.widget.TextView
+package com.android.permissioncontroller.permission.utils
+
+import android.os.SystemClock
 
 /**
- * Entry-point activity for SafetyCenter.
+ * Time source that uses the system time.
  */
-// TODO(b/200665463): Implement SafetyCenter UI on Android T.
-class SafetyCenterActivity : Activity() {
+class SystemTimeSource : TimeSource {
 
-    @SuppressLint("SetTextI18n") // This is just a skeleton for now.
-    public override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val safetyCenterText = TextView(this)
-        safetyCenterText.text = "SafetyCenter"
-        setContentView(safetyCenterText)
+    override fun currentTimeMillis(): Long {
+        return System.currentTimeMillis()
+    }
+
+    override fun elapsedRealtime(): Long {
+        return SystemClock.elapsedRealtime()
     }
 }
