@@ -56,6 +56,8 @@ public final class SafetyCenterEntry implements Parcelable {
      *
      * @see SafetyCenterEntry#getSeverityLevel()
      * @see Builder#setSeverityLevel(int)
+     *
+     * @hide
      */
     @Retention(RetentionPolicy.SOURCE)
     @IntDef(prefix = "ENTRY_SEVERITY_LEVEL_", value = {
@@ -66,7 +68,7 @@ public final class SafetyCenterEntry implements Parcelable {
             ENTRY_SEVERITY_LEVEL_RECOMMENDATION,
             ENTRY_SEVERITY_LEVEL_CRITICAL_WARNING,
     })
-    @interface EntrySeverityLevel {
+    public @interface EntrySeverityLevel {
     }
 
     /** Indicates the severity level of this entry is not currently known. */
@@ -100,13 +102,15 @@ public final class SafetyCenterEntry implements Parcelable {
      * <p>The stateless icon type indicates which icon should be used for a specific stateless entry
      * or entry group, and is only relevant when the entry's severity level is {@link
      * #ENTRY_SEVERITY_LEVEL_STATELESS}.
+     *
+     * @hide
      */
     @Retention(RetentionPolicy.SOURCE)
     @IntDef(prefix = "STATELESS_ICON_TYPE_", value = {
             STATELESS_ICON_TYPE_NONE,
             STATELESS_ICON_TYPE_PRIVACY
     })
-    @interface StatelessIconType {
+    public @interface StatelessIconType {
     }
 
     /** Indicates the stateless entry should not use an icon. */
@@ -125,6 +129,7 @@ public final class SafetyCenterEntry implements Parcelable {
     private final int mSeverityLevel;
     @StatelessIconType
     private final int mStatelessIconType;
+    private final boolean mEnabled;
     @NonNull
     private final PendingIntent mPendingIntent;
     @Nullable
@@ -136,6 +141,7 @@ public final class SafetyCenterEntry implements Parcelable {
             @Nullable CharSequence summary,
             @EntrySeverityLevel int severityLevel,
             @StatelessIconType int statelessIconType,
+            boolean enabled,
             @NonNull PendingIntent pendingIntent,
             @Nullable IconAction iconAction) {
         mId = requireNonNull(id);
@@ -143,6 +149,7 @@ public final class SafetyCenterEntry implements Parcelable {
         mSummary = summary;
         mSeverityLevel = severityLevel;
         mStatelessIconType = statelessIconType;
+        mEnabled = enabled;
         mPendingIntent = requireNonNull(pendingIntent);
         mIconAction = iconAction;
     }
@@ -180,6 +187,11 @@ public final class SafetyCenterEntry implements Parcelable {
         return mStatelessIconType;
     }
 
+    /** Returns whether or not this entry is enabled. */
+    public boolean isEnabled() {
+        return mEnabled;
+    }
+
     /** Returns the {@link PendingIntent} to execute when this entry is selected. */
     @NonNull
     public PendingIntent getPendingIntent() {
@@ -202,6 +214,7 @@ public final class SafetyCenterEntry implements Parcelable {
         SafetyCenterEntry that = (SafetyCenterEntry) o;
         return mSeverityLevel == that.mSeverityLevel
                 && mStatelessIconType == that.mStatelessIconType
+                && mEnabled == that.mEnabled
                 && Objects.equals(mId, that.mId)
                 && TextUtils.equals(mTitle, that.mTitle)
                 && TextUtils.equals(mSummary, that.mSummary)
@@ -211,7 +224,7 @@ public final class SafetyCenterEntry implements Parcelable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(mId, mTitle, mSummary, mSeverityLevel, mStatelessIconType,
+        return Objects.hash(mId, mTitle, mSummary, mSeverityLevel, mStatelessIconType, mEnabled,
                 mPendingIntent, mIconAction);
     }
 
@@ -223,6 +236,7 @@ public final class SafetyCenterEntry implements Parcelable {
                 + ", mSummary=" + mSummary
                 + ", mSeverityLevel=" + mSeverityLevel
                 + ", mStatelessIconType=" + mStatelessIconType
+                + ", mEnabled=" + mEnabled
                 + ", mAction=" + mPendingIntent
                 + ", mIconAction=" + mIconAction
                 + '}';
@@ -240,6 +254,7 @@ public final class SafetyCenterEntry implements Parcelable {
         TextUtils.writeToParcel(mSummary, dest, flags);
         dest.writeInt(mSeverityLevel);
         dest.writeInt(mStatelessIconType);
+        dest.writeBoolean(mEnabled);
         dest.writeParcelable(mPendingIntent, flags);
         dest.writeParcelable(mIconAction, flags);
     }
@@ -253,6 +268,7 @@ public final class SafetyCenterEntry implements Parcelable {
                     .setSummary(TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in))
                     .setSeverityLevel(in.readInt())
                     .setStatelessIconType(in.readInt())
+                    .setEnabled(in.readBoolean())
                     .setPendingIntent(
                             in.readParcelable(
                                     PendingIntent.class.getClassLoader(), PendingIntent.class))
@@ -278,6 +294,7 @@ public final class SafetyCenterEntry implements Parcelable {
         private int mSeverityLevel = ENTRY_SEVERITY_LEVEL_UNKNOWN;
         @StatelessIconType
         private int mStatelessIconType = STATELESS_ICON_TYPE_NONE;
+        private boolean mEnabled = true;
         private PendingIntent mPendingIntent;
         private IconAction mIconAction;
 
@@ -300,6 +317,7 @@ public final class SafetyCenterEntry implements Parcelable {
             mSummary = safetyCenterEntry.mSummary;
             mSeverityLevel = safetyCenterEntry.mSeverityLevel;
             mStatelessIconType = safetyCenterEntry.mStatelessIconType;
+            mEnabled = safetyCenterEntry.mEnabled;
             mPendingIntent = safetyCenterEntry.mPendingIntent;
             mIconAction = safetyCenterEntry.mIconAction;
         }
@@ -339,6 +357,13 @@ public final class SafetyCenterEntry implements Parcelable {
             return this;
         }
 
+        /** Sets whether or not this entry is enabled. Defaults to {@code true} if not set. */
+        @NonNull
+        public Builder setEnabled(boolean enabled) {
+            mEnabled = enabled;
+            return this;
+        }
+
         /** Sets the {@link PendingIntent} to execute when this entry is selected. */
         @NonNull
         public Builder setPendingIntent(@NonNull PendingIntent pendingIntent) {
@@ -370,6 +395,7 @@ public final class SafetyCenterEntry implements Parcelable {
                     mSummary,
                     mSeverityLevel,
                     mStatelessIconType,
+                    mEnabled,
                     mPendingIntent,
                     mIconAction);
         }
@@ -378,13 +404,16 @@ public final class SafetyCenterEntry implements Parcelable {
     /** An optional additional action with an icon for a {@link SafetyCenterEntry}. */
     public static final class IconAction implements Parcelable {
 
-        /** All possible icon action types. */
+        /**
+         * All possible icon action types.
+         * @hide
+         */
         @Retention(RetentionPolicy.SOURCE)
         @IntDef(prefix = "ICON_ACTION_TYPE_", value = {
                 ICON_ACTION_TYPE_GEAR,
                 ICON_ACTION_TYPE_INFO,
         })
-        @interface IconActionType {
+        public @interface IconActionType {
         }
 
         /** A gear-type icon action, e.g. that links to a settings page for a specific entry. */
