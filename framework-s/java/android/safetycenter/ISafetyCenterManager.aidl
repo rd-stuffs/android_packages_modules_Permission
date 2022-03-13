@@ -18,7 +18,9 @@ package android.safetycenter;
 
 import android.safetycenter.IOnSafetyCenterDataChangedListener;
 import android.safetycenter.SafetyCenterData;
+import android.safetycenter.SafetyCenterError;
 import android.safetycenter.SafetySourceData;
+import android.safetycenter.SafetySourceError;
 
 /**
  * AIDL service for the safety center.
@@ -32,6 +34,11 @@ import android.safetycenter.SafetySourceData;
  */
 interface ISafetyCenterManager {
     /**
+     * Returns whether the SafetyCenter page is enabled.
+     */
+    boolean isSafetyCenterEnabled();
+
+     /**
      * Called by a safety source to send a SafetySourceData update to the safety center.
      */
     void sendSafetyCenterUpdate(
@@ -48,21 +55,40 @@ interface ISafetyCenterManager {
             String packageName,
             int userId);
 
-    /**
-     * Returns whether the SafetyCenter page is enabled.
-     */
-    boolean isSafetyCenterEnabled();
-
    /**
      * Requests safety sources to send a SafetySourceData update to Safety Center.
     */
     void refreshSafetySources(int refreshReason, int userId);
 
     /**
-     * Clears all SafetySourceData updates sent to the safety center using sendSafetyCenterUpdate,
-     * for all packages and users.
+     * Notifies the SafetyCenter of an error related to a given safety source.
+     *
+     * <p>Safety sources should use this API to notify SafetyCenter when SafetyCenter requested or
+     * expected them to perform an action or provide data, but they were unable to do so.
      */
-    void clearSafetyCenterData();
+    void reportSafetySourceError(String safetySourceId,
+            in SafetySourceError error,
+            String packageName,
+            int userId);
+
+    /**
+    * Add a safety source dynamically to be used in addition to the sources in the Safety Center
+    * xml configuration.
+    *
+    * <p>Note: This API serves to facilitate CTS testing and should not be used for other purposes.
+    */
+    void addAdditionalSafetySource(
+            String sourceId,
+            String packageName,
+            String broadcastReceiverName);
+
+    /**
+     * Clears additional safety sources added dynamically to be used in addition to the sources in
+     * the Safety Center xml configuration.
+     *
+     * <p>Note: This API serves to facilitate CTS testing and should not be used for other purposes.
+     */
+    void clearAdditionalSafetySources();
 
     /**
      * Returns the current SafetyCenterData, assembled from the SafetySourceData from all sources.
@@ -77,8 +103,17 @@ interface ISafetyCenterManager {
             IOnSafetyCenterDataChangedListener listener,
             int userId);
 
+    /** Executes the specified action on the specified issue. */
+    void executeAction(String safetyCenterIssueId, String safetyCenterActionId, int userId);
+
     /**
      * Dismisses the issue corresponding to the given issue ID.
      */
     void dismissSafetyIssue(String issueId, int userId);
+
+    /**
+     * Clears all SafetySourceData updates sent to the safety center using sendSafetyCenterUpdate,
+     * for all packages and users.
+     */
+    void clearSafetyCenterData();
 }
