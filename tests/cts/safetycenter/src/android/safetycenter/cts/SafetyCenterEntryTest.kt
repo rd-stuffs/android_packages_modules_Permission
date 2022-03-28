@@ -99,14 +99,15 @@ class SafetyCenterEntryTest {
     }
 
     @Test
-    fun getSeverityNoneIconType_returnsSeverityNoneIconType() {
-        assertThat(entry1.severityNoneIconType).isEqualTo(
-                SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_NO_ICON)
+    fun getSeverityUnspecifiedIconType_returnsSeverityUnspecifiedIconType() {
+        assertThat(entry1.severityUnspecifiedIconType).isEqualTo(
+                SafetyCenterEntry.SEVERITY_UNSPECIFIED_ICON_TYPE_NO_ICON)
         assertThat(SafetyCenterEntry.Builder(entry1)
-                .setSeverityNoneIconType(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
+                .setSeverityUnspecifiedIconType(
+                        SafetyCenterEntry.SEVERITY_UNSPECIFIED_ICON_TYPE_PRIVACY)
                 .build()
-                .severityNoneIconType)
-                .isEqualTo(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
+                .severityUnspecifiedIconType)
+                .isEqualTo(SafetyCenterEntry.SEVERITY_UNSPECIFIED_ICON_TYPE_PRIVACY)
     }
 
     @Test
@@ -140,6 +141,11 @@ class SafetyCenterEntryTest {
                 .build()
                 .pendingIntent)
                 .isEqualTo(pendingIntent2)
+        assertThat(SafetyCenterEntry.Builder(entry1)
+                .setPendingIntent(null)
+                .build()
+                .pendingIntent)
+                .isNull()
     }
 
     @Test
@@ -158,7 +164,25 @@ class SafetyCenterEntryTest {
     }
 
     @Test
-    fun createFromParcel_withWriteToParcel_returnsEquivalentObject() {
+    fun createFromParcel_withWriteToParcel_withAllFields_returnsEquivalentObject() {
+        val parcel = Parcel.obtain()
+        val entryMinimal = SafetyCenterEntry.Builder(entry1)
+                .setSummary(null)
+                .setPendingIntent(null)
+                .setIconAction(null)
+                .build()
+
+        entryMinimal.writeToParcel(parcel, /* flags= */ 0)
+        parcel.setDataPosition(0)
+
+        val fromParcel = SafetyCenterEntry.CREATOR.createFromParcel(parcel)
+        parcel.recycle()
+
+        assertThat(fromParcel).isEqualTo(entryMinimal)
+    }
+
+    @Test
+    fun createFromParcel_withWriteToParcel_withMinimalFields_returnsEquivalentObject() {
         val parcel = Parcel.obtain()
 
         entry1.writeToParcel(parcel, /* flags= */ 0)
@@ -183,7 +207,8 @@ class SafetyCenterEntryTest {
                 .setTitle("a title")
                 .setSummary("a summary")
                 .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_OK)
-                .setSeverityNoneIconType(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
+                .setSeverityUnspecifiedIconType(
+                        SafetyCenterEntry.SEVERITY_UNSPECIFIED_ICON_TYPE_PRIVACY)
                 .setPendingIntent(pendingIntent1)
                 .setIconAction(SafetyCenterEntry.IconAction.ICON_ACTION_TYPE_INFO, pendingIntent2)
                 .build()
@@ -191,7 +216,8 @@ class SafetyCenterEntryTest {
                 .setTitle("a title")
                 .setSummary("a summary")
                 .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_OK)
-                .setSeverityNoneIconType(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
+                .setSeverityUnspecifiedIconType(
+                        SafetyCenterEntry.SEVERITY_UNSPECIFIED_ICON_TYPE_PRIVACY)
                 .setPendingIntent(pendingIntent1)
                 .setIconAction(SafetyCenterEntry.IconAction.ICON_ACTION_TYPE_INFO, pendingIntent2)
                 .build()
@@ -251,9 +277,10 @@ class SafetyCenterEntryTest {
     }
 
     @Test
-    fun equals_toString_withDifferentSeverityNoneIconTypes_areNotEqual() {
+    fun equals_toString_withDifferentSeverityUnspecifiedIconTypes_areNotEqual() {
         val differentFromEntry1 = SafetyCenterEntry.Builder(entry1)
-                .setSeverityNoneIconType(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
+                .setSeverityUnspecifiedIconType(
+                        SafetyCenterEntry.SEVERITY_UNSPECIFIED_ICON_TYPE_PRIVACY)
                 .build()
 
         assertThat(differentFromEntry1).isNotEqualTo(entry1)

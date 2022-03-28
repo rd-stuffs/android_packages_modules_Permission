@@ -27,13 +27,13 @@ import android.safetycenter.SafetySourceIssue.ISSUE_CATEGORY_ACCOUNT
 import android.safetycenter.SafetySourceIssue.ISSUE_CATEGORY_DEVICE
 import android.safetycenter.SafetySourceIssue.ISSUE_CATEGORY_GENERAL
 import android.safetycenter.SafetySourceIssue.Action
-import android.safetycenter.SafetySourceIssue.SEVERITY_LEVEL_CRITICAL_WARNING
-import android.safetycenter.SafetySourceIssue.SEVERITY_LEVEL_INFORMATION
+import android.safetycenter.SafetySourceSeverity.LEVEL_CRITICAL_WARNING
+import android.safetycenter.SafetySourceSeverity.LEVEL_INFORMATION
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import com.google.common.truth.Truth.assertThat
-import org.junit.Assert.assertThrows
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -70,19 +70,19 @@ class SafetySourceIssueTest {
     }
 
     @Test
-    fun action_isResolving_withDefaultBuilder_returnsFalse() {
+    fun action_willResolve_withDefaultBuilder_returnsFalse() {
         val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
 
-        assertThat(action.isResolving).isFalse()
+        assertThat(action.willResolve()).isFalse()
     }
 
     @Test
-    fun action_isResolving_whenSetExplicitly_returnsResolving() {
+    fun action_willResolve_whenSetExplicitly_returnsWillResolve() {
         val action = Action.Builder("action_id", "Action label", pendingIntent1)
-            .setResolving(true)
+            .setWillResolve(true)
             .build()
 
-        assertThat(action.isResolving).isTrue()
+        assertThat(action.willResolve()).isTrue()
     }
 
     @Test
@@ -172,12 +172,12 @@ class SafetySourceIssueTest {
     }
 
     @Test
-    fun action_hashCode_equals_toString_withDifferentResolving_areNotEqual() {
+    fun action_hashCode_equals_toString_withDifferentWillResolve_areNotEqual() {
         val action =
-            Action.Builder("action_id", "Action label", pendingIntent1).setResolving(false)
+            Action.Builder("action_id", "Action label", pendingIntent1).setWillResolve(false)
                 .build()
         val otherAction =
-            Action.Builder("action_id", "Action label", pendingIntent1).setResolving(true).build()
+            Action.Builder("action_id", "Action label", pendingIntent1).setWillResolve(true).build()
 
         assertThat(action.hashCode()).isNotEqualTo(otherAction.hashCode())
         assertThat(action).isNotEqualTo(otherAction)
@@ -232,7 +232,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         )
             .addAction(action1)
@@ -247,7 +247,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         )
             .addAction(action1)
@@ -262,7 +262,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         )
             .addAction(action1)
@@ -277,7 +277,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         )
             .setSubtitle("Issue subtitle")
@@ -293,7 +293,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         )
             .addAction(action1)
@@ -308,12 +308,12 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
 
-        assertThat(safetySourceIssue.severityLevel).isEqualTo(SEVERITY_LEVEL_INFORMATION)
+        assertThat(safetySourceIssue.severityLevel).isEqualTo(LEVEL_INFORMATION)
     }
 
     @Test
@@ -322,7 +322,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -336,7 +336,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .setIssueCategory(ISSUE_CATEGORY_DEVICE)
@@ -351,7 +351,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .addAction(action2)
@@ -366,7 +366,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .addAction(action2)
@@ -383,7 +383,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -397,7 +397,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .setOnDismissPendingIntent(pendingIntent1)
@@ -412,7 +412,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -426,13 +426,16 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         )
-        assertThrows(
-            "Safety source issue must contain at least 1 action",
-            IllegalArgumentException::class.java
-        ) { safetySourceIssueBuilder.build() }
+
+        val exception = assertFailsWith(IllegalArgumentException::class) {
+            safetySourceIssueBuilder.build()
+        }
+        assertThat(exception)
+            .hasMessageThat()
+            .isEqualTo("Safety source issue must contain at least 1 action")
     }
 
     @Test
@@ -441,16 +444,18 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .addAction(action2)
             .addAction(action1)
 
-        assertThrows(
-            "Safety source issue must not contain more than 2 actions",
-            IllegalArgumentException::class.java
-        ) { safetySourceIssueBuilder.build() }
+        val exception = assertFailsWith(IllegalArgumentException::class) {
+            safetySourceIssueBuilder.build()
+        }
+        assertThat(exception)
+            .hasMessageThat()
+            .isEqualTo("Safety source issue must not contain more than 2 actions")
     }
 
     @Test
@@ -459,7 +464,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).setSubtitle("Issue subtitle")
             .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
@@ -477,7 +482,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).setSubtitle("Issue subtitle")
             .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
@@ -503,7 +508,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).setSubtitle("Issue subtitle")
             .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
@@ -524,13 +529,13 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).setSubtitle("Issue subtitle")
             .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
             .addAction(
                 Action.Builder("action_id", "Action label 1", pendingIntent1)
-                    .setResolving(false)
+                    .setWillResolve(false)
                     .build()
             )
             .setOnDismissPendingIntent(pendingIntent1)
@@ -539,13 +544,13 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).setSubtitle("Issue subtitle")
             .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
             .addAction(
                 Action.Builder("action_id", "Action label 1", pendingIntent1)
-                    .setResolving(false)
+                    .setWillResolve(false)
                     .build()
             )
             .setOnDismissPendingIntent(pendingIntent1)
@@ -562,7 +567,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -570,7 +575,7 @@ class SafetySourceIssueTest {
             "Other issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -586,7 +591,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -594,7 +599,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Other issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -610,7 +615,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).setSubtitle("Issue subtitle")
             .addAction(action1)
@@ -619,7 +624,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).setSubtitle("Other issue subtitle")
             .addAction(action1)
@@ -636,7 +641,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -644,7 +649,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Other issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -660,7 +665,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -668,7 +673,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_CRITICAL_WARNING,
+            LEVEL_CRITICAL_WARNING,
             "issue_type_id"
         )
             .addAction(action1)
@@ -685,7 +690,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         )
             .addAction(action1)
@@ -695,7 +700,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         )
             .addAction(action1)
@@ -713,7 +718,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .addAction(action2)
@@ -722,7 +727,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action2)
             .addAction(action1)
@@ -739,7 +744,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .setOnDismissPendingIntent(pendingIntent1)
@@ -748,7 +753,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .setOnDismissPendingIntent(pendingIntent2)
@@ -765,7 +770,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "issue_type_id"
         ).addAction(action1)
             .build()
@@ -773,7 +778,7 @@ class SafetySourceIssueTest {
             "Issue id",
             "Issue title",
             "Issue summary",
-            SEVERITY_LEVEL_INFORMATION,
+            LEVEL_INFORMATION,
             "other_issue_type_id"
         ).addAction(action1)
             .build()

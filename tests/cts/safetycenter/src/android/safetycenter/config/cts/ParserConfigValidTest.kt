@@ -17,17 +17,20 @@
 package android.safetycenter.config.cts
 
 import android.content.Context
+import android.os.Build.VERSION_CODES.TIRAMISU
 import android.safetycenter.config.SafetyCenterConfig
 import android.safetycenter.config.SafetySource
 import android.safetycenter.config.SafetySourcesGroup
 import android.safetycenter.cts.R
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Assert.assertEquals
+import androidx.test.filters.SdkSuppress
+import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@SdkSuppress(minSdkVersion = TIRAMISU, codeName = "Tiramisu")
 class ParserConfigValidTest {
     private val context: Context = getApplicationContext()
 
@@ -59,7 +62,6 @@ class ParserConfigValidTest {
                     .setInitialDisplayState(SafetySource.INITIAL_DISPLAY_STATE_DISABLED)
                     .setMaxSeverityLevel(300)
                     .setSearchTermsResId(R.string.reference)
-                    .setBroadcastReceiverClassName("broadcast")
                     .setLoggingAllowed(false)
                     .setRefreshOnPageOpenAllowed(true)
                     .build())
@@ -110,7 +112,6 @@ class ParserConfigValidTest {
                     .setPackageName("package")
                     .setProfile(SafetySource.PROFILE_ALL)
                     .setMaxSeverityLevel(300)
-                    .setBroadcastReceiverClassName("broadcast")
                     .setLoggingAllowed(false)
                     .setRefreshOnPageOpenAllowed(true)
                     .build())
@@ -140,6 +141,6 @@ class ParserConfigValidTest {
                     .build())
                 .build())
             .build()
-        assertEquals(expected, SafetyCenterConfig.fromXml(parser))
+        assertThat(SafetyCenterConfig.fromXml(parser)).isEqualTo(expected)
     }
 }

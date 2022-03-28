@@ -25,6 +25,7 @@ import static java.util.Objects.requireNonNull;
 import android.annotation.IntDef;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
+import android.annotation.SuppressLint;
 import android.annotation.SystemApi;
 import android.app.PendingIntent;
 import android.os.Parcel;
@@ -36,6 +37,7 @@ import androidx.annotation.RequiresApi;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -53,36 +55,6 @@ import java.util.Objects;
 @SystemApi
 @RequiresApi(TIRAMISU)
 public final class SafetySourceIssue implements Parcelable {
-
-    /**
-     * Indicates an informational message.
-     *
-     * <p>This severity will be reflected in the UI through a green icon.
-     *
-     * <p>Issues with this severity will be dismissible by the user from the UI, and will not
-     * trigger a confirmation dialog upon a user attempting to dismiss the warning.
-     */
-    public static final int SEVERITY_LEVEL_INFORMATION = 200;
-
-    /**
-     * Indicates a medium-severity issue which the user is encouraged to act on.
-     *
-     * <p>This severity will be reflected in the UI through a yellow icon.
-     *
-     * <p>Issues with this severity will be dismissible by the user from the UI, and will trigger a
-     * confirmation dialog upon a user attempting to dismiss the warning.
-     */
-    public static final int SEVERITY_LEVEL_RECOMMENDATION = 300;
-
-    /**
-     * Indicates a critical or urgent safety issue that should be addressed by the user.
-     *
-     * <p>This severity will be reflected in the UI through a red icon.
-     *
-     * <p>Issues with this severity will be dismissible by the user from the UI, and will trigger a
-     * confirmation dialog upon a user attempting to dismiss the warning.
-     */
-    public static final int SEVERITY_LEVEL_CRITICAL_WARNING = 400;
 
     /** Indicates that the risk associated with the issue is related to a user's device safety. */
     public static final int ISSUE_CATEGORY_DEVICE = 100;
@@ -111,8 +83,15 @@ public final class SafetySourceIssue implements Parcelable {
                     PendingIntent onDismissPendingIntent =
                             PendingIntent.readPendingIntentOrNullFromParcel(in);
                     String issueTypeId = requireNonNull(in.readString());
-                    return new SafetySourceIssue(id, title, subtitle, summary, severityLevel,
-                            issueCategory, actions, onDismissPendingIntent, issueTypeId);
+                    Builder builder = new Builder(id, title, summary, severityLevel, issueTypeId)
+                            .setSubtitle(subtitle)
+                            .setIssueCategory(issueCategory)
+                            .setOnDismissPendingIntent(onDismissPendingIntent);
+                    // TODO(b/224513050): Consider simplifying by adding a new API to the builder.
+                    for (int i = 0; i < actions.size(); i++) {
+                        builder.addAction(actions.get(i));
+                    }
+                    return builder.build();
                 }
 
                 @Override
@@ -129,7 +108,7 @@ public final class SafetySourceIssue implements Parcelable {
     private final CharSequence mSubtitle;
     @NonNull
     private final CharSequence mSummary;
-    @SeverityLevel
+    @SafetySourceSeverity.Level
     private final int mSeverityLevel;
     private final List<Action> mActions;
     @Nullable
@@ -143,7 +122,7 @@ public final class SafetySourceIssue implements Parcelable {
             @NonNull CharSequence title,
             @Nullable CharSequence subtitle,
             @NonNull CharSequence summary,
-            @SeverityLevel int severityLevel,
+            @SafetySourceSeverity.Level int severityLevel,
             @IssueCategory int issueCategory,
             @NonNull List<Action> actions,
             @Nullable PendingIntent onDismissPendingIntent,
@@ -191,8 +170,8 @@ public final class SafetySourceIssue implements Parcelable {
         return mSummary;
     }
 
-    /** Returns the {@link SeverityLevel} of the issue. */
-    @SeverityLevel
+    /** Returns the {@link SafetySourceSeverity.Level} of the issue. */
+    @SafetySourceSeverity.Level
     public int getSeverityLevel() {
         return mSeverityLevel;
     }
@@ -208,8 +187,7 @@ public final class SafetySourceIssue implements Parcelable {
     }
 
     /**
-     * Returns a list of {@link Action} instances representing actions supported in the UI for this
-     * issue.
+     * Returns a list of {@link Action}s representing actions supported in the UI for this issue.
      *
      * <p>Each issue must contain at least one action, in order to help the user resolve the issue.
      *
@@ -277,7 +255,7 @@ public final class SafetySourceIssue implements Parcelable {
         return mSeverityLevel == that.mSeverityLevel
                 && TextUtils.equals(mId, that.mId)
                 && TextUtils.equals(mTitle, that.mTitle)
-                && Objects.equals(mSubtitle, that.mSubtitle)
+                && TextUtils.equals(mSubtitle, that.mSubtitle)
                 && TextUtils.equals(mSummary, that.mSummary)
                 && mIssueCategory == that.mIssueCategory
                 && mActions.equals(that.mActions)
@@ -313,31 +291,6 @@ public final class SafetySourceIssue implements Parcelable {
                 + ", mIssueTypeId="
                 + mIssueTypeId
                 + '}';
-    }
-
-    /**
-     * All possible severity levels for the safety source issue.
-     *
-     * <p>The severity level is meant to convey the severity of the individual issue.
-     *
-     * <p>The higher the severity level, the worse the safety level of the source and the higher
-     * the threat to the user.
-     *
-     * <p>The numerical values of the levels are not used directly, rather they are used to build
-     * a continuum of levels which support relative comparison.
-     *
-     * <p>The severity also determines how the issue is "dismissible" by the user, i.e. how
-     * the user can choose to ignore the issue and remove it from view in the Safety Center.
-     *
-     * @hide
-     */
-    @IntDef(prefix = {"SEVERITY_LEVEL_"}, value = {
-            SEVERITY_LEVEL_INFORMATION,
-            SEVERITY_LEVEL_RECOMMENDATION,
-            SEVERITY_LEVEL_CRITICAL_WARNING
-    })
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface SeverityLevel {
     }
 
     /**
@@ -382,16 +335,14 @@ public final class SafetySourceIssue implements Parcelable {
                 new Parcelable.Creator<Action>() {
                     @Override
                     public Action createFromParcel(Parcel in) {
-                        String id = requireNonNull(in.readString());
-                        CharSequence label =
-                                requireNonNull(
-                                        TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in));
-                        PendingIntent pendingIntent =
-                                requireNonNull(PendingIntent.readPendingIntentOrNullFromParcel(in));
-                        boolean resolving = in.readBoolean();
-                        CharSequence successMessage =
-                                TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
-                        return new Action(id, label, pendingIntent, resolving, successMessage);
+                        return new Builder(
+                                in.readString(),
+                                TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in),
+                                PendingIntent.readPendingIntentOrNullFromParcel(in))
+                                .setWillResolve(in.readBoolean())
+                                .setSuccessMessage(
+                                        TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in))
+                                .build();
                     }
 
                     @Override
@@ -406,7 +357,7 @@ public final class SafetySourceIssue implements Parcelable {
         private final CharSequence mLabel;
         @NonNull
         private final PendingIntent mPendingIntent;
-        private final boolean mResolving;
+        private final boolean mWillResolve;
         @Nullable
         private final CharSequence mSuccessMessage;
 
@@ -414,12 +365,12 @@ public final class SafetySourceIssue implements Parcelable {
                 String id,
                 @NonNull CharSequence label,
                 @NonNull PendingIntent pendingIntent,
-                boolean resolving,
+                boolean willResolve,
                 @Nullable CharSequence successMessage) {
             mId = id;
             mLabel = label;
             mPendingIntent = pendingIntent;
-            mResolving = resolving;
+            mWillResolve = willResolve;
             mSuccessMessage = successMessage;
         }
 
@@ -457,8 +408,8 @@ public final class SafetySourceIssue implements Parcelable {
          * to be considered resolved i.e. the issue will no longer need to be conveyed to the user
          * in the UI.
          */
-        public boolean isResolving() {
-            return mResolving;
+        public boolean willResolve() {
+            return mWillResolve;
         }
 
         /**
@@ -480,7 +431,7 @@ public final class SafetySourceIssue implements Parcelable {
             dest.writeString(mId);
             TextUtils.writeToParcel(mLabel, dest, flags);
             mPendingIntent.writeToParcel(dest, flags);
-            dest.writeBoolean(mResolving);
+            dest.writeBoolean(mWillResolve);
             TextUtils.writeToParcel(mSuccessMessage, dest, flags);
         }
 
@@ -492,13 +443,13 @@ public final class SafetySourceIssue implements Parcelable {
             return mId.equals(that.mId)
                     && TextUtils.equals(mLabel, that.mLabel)
                     && mPendingIntent.equals(that.mPendingIntent)
-                    && mResolving == that.mResolving
-                    && Objects.equals(mSuccessMessage, that.mSuccessMessage);
+                    && mWillResolve == that.mWillResolve
+                    && TextUtils.equals(mSuccessMessage, that.mSuccessMessage);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(mId, mLabel, mPendingIntent, mResolving, mSuccessMessage);
+            return Objects.hash(mId, mLabel, mPendingIntent, mWillResolve, mSuccessMessage);
         }
 
         @Override
@@ -507,7 +458,7 @@ public final class SafetySourceIssue implements Parcelable {
                     + "mId=" + mId
                     + ", mLabel=" + mLabel
                     + ", mPendingIntent=" + mPendingIntent
-                    + ", mResolving=" + mResolving
+                    + ", mWillResolve=" + mWillResolve
                     + ", mSuccessMessage=" + mSuccessMessage
                     + '}';
         }
@@ -520,7 +471,7 @@ public final class SafetySourceIssue implements Parcelable {
             private final CharSequence mLabel;
             @NonNull
             private final PendingIntent mPendingIntent;
-            private boolean mResolving = false;
+            private boolean mWillResolve = false;
             @Nullable
             private CharSequence mSuccessMessage;
 
@@ -537,11 +488,12 @@ public final class SafetySourceIssue implements Parcelable {
             /**
              * Sets whether the action will resolve the safety issue. Defaults to false.
              *
-             * @see #isResolving()
+             * @see #willResolve()
              */
+            @SuppressLint("MissingGetterMatchingBuilder")
             @NonNull
-            public Builder setResolving(boolean resolving) {
-                mResolving = resolving;
+            public Builder setWillResolve(boolean willResolve) {
+                mWillResolve = willResolve;
                 return this;
             }
 
@@ -558,7 +510,7 @@ public final class SafetySourceIssue implements Parcelable {
             /** Creates the {@link Action} defined by this {@link Builder}. */
             @NonNull
             public Action build() {
-                return new Action(mId, mLabel, mPendingIntent, mResolving, mSuccessMessage);
+                return new Action(mId, mLabel, mPendingIntent, mWillResolve, mSuccessMessage);
             }
         }
     }
@@ -573,7 +525,7 @@ public final class SafetySourceIssue implements Parcelable {
         private CharSequence mSubtitle;
         @NonNull
         private final CharSequence mSummary;
-        @SeverityLevel
+        @SafetySourceSeverity.Level
         private final int mSeverityLevel;
         @IssueCategory
         private int mIssueCategory = ISSUE_CATEGORY_GENERAL;
@@ -589,7 +541,7 @@ public final class SafetySourceIssue implements Parcelable {
                 @NonNull String id,
                 @NonNull CharSequence title,
                 @NonNull CharSequence summary,
-                @SeverityLevel int severityLevel,
+                @SafetySourceSeverity.Level int severityLevel,
                 @NonNull String issueTypeId) {
             this.mId = id;
             this.mTitle = requireNonNull(title);
@@ -616,14 +568,14 @@ public final class SafetySourceIssue implements Parcelable {
             return this;
         }
 
-        /** Adds data for an action to be shown in UI. */
+        /** Adds data for an {@link Action} to be shown in UI. */
         @NonNull
         public Builder addAction(@NonNull Action actionData) {
             mActions.add(requireNonNull(actionData));
             return this;
         }
 
-        /** Clears data for all the actions that were added to this {@link Builder}. */
+        /** Clears data for all the {@link Action}s that were added to this {@link Builder}. */
         @NonNull
         public Builder clearActions() {
             mActions.clear();
@@ -654,7 +606,8 @@ public final class SafetySourceIssue implements Parcelable {
             checkArgument(mActions.size() <= 2,
                     "Safety source issue must not contain more than 2 actions");
             return new SafetySourceIssue(mId, mTitle, mSubtitle, mSummary, mSeverityLevel,
-                    mIssueCategory, mActions, mOnDismissPendingIntent, mIssueTypeId);
+                    mIssueCategory, Collections.unmodifiableList(mActions), mOnDismissPendingIntent,
+                    mIssueTypeId);
         }
     }
 }

@@ -18,10 +18,9 @@ package android.safetycenter;
 
 import android.safetycenter.IOnSafetyCenterDataChangedListener;
 import android.safetycenter.SafetyCenterData;
-import android.safetycenter.SafetyCenterError;
 import android.safetycenter.SafetyEvent;
 import android.safetycenter.SafetySourceData;
-import android.safetycenter.SafetySourceError;
+import android.safetycenter.SafetySourceErrorDetails;
 import android.safetycenter.config.SafetyCenterConfig;
 
 /**
@@ -64,13 +63,17 @@ interface ISafetyCenterManager {
      * <p>Safety sources should use this API to notify SafetyCenter when SafetyCenter requested or
      * expected them to perform an action or provide data, but they were unable to do so.
      */
-    void reportSafetySourceError(String safetySourceId,
-            in SafetySourceError safetySourceError,
+    void reportSafetySourceError(
+            String safetySourceId,
+            in SafetySourceErrorDetails safetySourceErrorDetails,
             String packageName,
             int userId);
 
     /** Requests safety sources to set their latest SafetySourceData for Safety Center. */
     void refreshSafetySources(int refreshReason, int userId);
+
+    /** Returns the current SafetyCenterConfig, if available. */
+    SafetyCenterConfig getSafetyCenterConfig();
 
     /**
      * Returns the current SafetyCenterData, assembled from the SafetySourceData from all sources.
@@ -86,12 +89,16 @@ interface ISafetyCenterManager {
             int userId);
 
     /**
-     * Dismisses the issue corresponding to the given issue ID.
+     * Dismiss a Safety Center issue and prevent it from appearing in the Safety Center or affecting
+     * the overall safety status.
      */
-    void dismissSafetyIssue(String issueId, int userId);
+    void dismissSafetyCenterIssue(String issueId, int userId);
 
-    /** Executes the specified action on the specified issue. */
-    void executeAction(String safetyCenterIssueId, String safetyCenterIssueActionId, int userId);
+    /** Executes the specified Safety Center issue action on the specified Safety Center issue. */
+    void executeSafetyCenterIssueAction(
+            String safetyCenterIssueId,
+            String safetyCenterIssueActionId,
+            int userId);
 
     /**
      * Clears all SafetySourceData set by safety sources using setSafetySourceData.
