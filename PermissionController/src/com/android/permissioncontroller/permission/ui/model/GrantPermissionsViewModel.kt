@@ -19,6 +19,7 @@ package com.android.permissioncontroller.permission.ui.model
 import android.Manifest
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest.permission.POST_NOTIFICATIONS
 import android.Manifest.permission_group.LOCATION
 import android.app.Activity
 import android.app.Application
@@ -38,6 +39,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.android.permissioncontroller.Constants
 import com.android.permissioncontroller.DeviceUtils
+import com.android.permissioncontroller.PermissionControllerApplication
 import com.android.permissioncontroller.PermissionControllerStatsLog
 import com.android.permissioncontroller.PermissionControllerStatsLog.GRANT_PERMISSIONS_ACTIVITY_BUTTON_ACTIONS
 import com.android.permissioncontroller.PermissionControllerStatsLog.PERMISSION_GRANT_REQUEST_RESULT_REPORTED__RESULT__AUTO_DENIED
@@ -118,6 +120,7 @@ class GrantPermissionsViewModel(
     private val app: Application,
     private val packageName: String,
     private val requestedPermissions: List<String>,
+    private val legacyAccessPermissions: List<String>,
     private val sessionId: Long,
     private val storedState: Bundle?
 ) : ViewModel() {
@@ -144,7 +147,7 @@ class GrantPermissionsViewModel(
 
     private val splitPermissionTargetSdkMap = mutableMapOf<String, Int>()
 
-    private var appPermGroupLiveDatasCache = mutableMapOf<String, LightAppPermGroupLiveData>()
+    private var appPermGroupLiveDatas = mutableMapOf<String, LightAppPermGroupLiveData>()
 
     /**
      * A class which represents a correctly requested permission group, and the buttons and messages
@@ -170,7 +173,6 @@ class GrantPermissionsViewModel(
         SmartUpdateMediatorLiveData<List<RequestInfo>>() {
         private val LOG_TAG = GrantPermissionsViewModel::class.java.simpleName
         private val packagePermissionsLiveData = PackagePermissionsLiveData[packageName, user]
-        private val appPermGroupLiveDatas = mutableMapOf<String, LightAppPermGroupLiveData>()
 
         init {
             GlobalScope.launch(Main.immediate) {
@@ -230,7 +232,6 @@ class GrantPermissionsViewModel(
             if (appPermGroupLiveDatas.any { it.value.isStale }) {
                 return
             }
-            appPermGroupLiveDatasCache = appPermGroupLiveDatas
             var newGroups = false
             for ((groupName, groupLiveData) in appPermGroupLiveDatas) {
                 val appPermGroup = groupLiveData.value
@@ -312,7 +313,8 @@ class GrantPermissionsViewModel(
                 buttonVisibilities[DENY_BUTTON] = true
                 buttonVisibilities[ALLOW_ONE_TIME_BUTTON] =
                     Utils.supportsOneTimeGrant(groupName)
-                var message = if (groupState.group.isRuntimePermReviewRequired) {
+                var message = if (
+                    legacyAccessPermissions.any { it in groupState.affectedPermissions }) {
                     RequestMessage.CONTINUE_MESSAGE
                 } else {
                     RequestMessage.FG_MESSAGE
@@ -797,26 +799,27 @@ class GrantPermissionsViewModel(
         affectedForegroundPermissions: List<String>?,
         result: Int
     ) {
-        onPermissionGrantResult(groupName, affectedForegroundPermissions, result, true)
+        onPermissionGrantResult(groupName, affectedForegroundPermissions, result, false)
     }
 
     private fun onPermissionGrantResult(
         groupName: String?,
         affectedForegroundPermissions: List<String>?,
         result: Int,
-        canRecurse: Boolean
+        alreadyRequestedStorageGroupsIfNeeded: Boolean
     ) {
         if (groupName == null) {
             return
         }
 
         // If this is a legacy app, and a storage group is requested: request all storage groups
-        if (canRecurse && groupName in Utils.STORAGE_SUPERGROUP_PERMISSIONS &&
-                packageInfo.targetSdkVersion <= Build.VERSION_CODES.S_V2) {
+        if (!alreadyRequestedStorageGroupsIfNeeded &&
+            groupName in Utils.STORAGE_SUPERGROUP_PERMISSIONS &&
+            packageInfo.targetSdkVersion <= Build.VERSION_CODES.S_V2) {
             for (groupName in Utils.STORAGE_SUPERGROUP_PERMISSIONS) {
-                val groupPerms = appPermGroupLiveDatasCache[groupName]
-                        ?.value?.allPermissions?.keys?.toList()
-                onPermissionGrantResult(groupName, groupPerms, result, false)
+                val groupPerms = appPermGroupLiveDatas[groupName]
+                    ?.value?.allPermissions?.keys?.toList()
+                onPermissionGrantResult(groupName, groupPerms, result, true)
             }
             return
         }
@@ -1262,6 +1265,27 @@ class GrantPermissionsViewModel(
             STORAGE_SUPERGROUP_MESSAGE_Q_TO_S(7),
             STORAGE_SUPERGROUP_MESSAGE_PRE_Q(8);
         }
+
+        fun filterNotificationPermissionIfNeededSync(
+            packageName: String,
+            permissions: Array<String>?
+        ): Array<String>? {
+            if (permissions == null) {
+                return null
+            }
+
+            try {
+                val targetSdk = PermissionControllerApplication.get().packageManager
+                        .getPackageInfo(packageName, 0).applicationInfo.targetSdkVersion
+                if (targetSdk > Build.VERSION_CODES.S_V2) {
+                    return permissions
+                }
+            } catch (e: PackageManager.NameNotFoundException) {
+                return permissions
+            }
+
+            return permissions.toList().filter { it != POST_NOTIFICATIONS }.toTypedArray()
+        }
     }
 }
 
@@ -1275,12 +1299,13 @@ class GrantPermissionsViewModelFactory(
     private val app: Application,
     private val packageName: String,
     private val requestedPermissions: Array<String>,
+    private val legacyAccessPermissions: Array<String>,
     private val sessionId: Long,
     private val savedState: Bundle?
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
-        return GrantPermissionsViewModel(app, packageName, requestedPermissions.toList(), sessionId,
-            savedState) as T
+        return GrantPermissionsViewModel(app, packageName, requestedPermissions.toList(),
+            legacyAccessPermissions.toList(), sessionId, savedState) as T
     }
 }
