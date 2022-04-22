@@ -199,10 +199,8 @@
     <string name="unused_apps_category_title" msgid="2988455616845243901">"Neizmantoto lietotņu iestatījumi"</string>
     <string name="auto_revoke_label" msgid="5068393642936571656">"Noņemt atļaujas, ja lietotne netiek izmantota"</string>
     <string name="unused_apps_label" msgid="2595428768404901064">"Noņemt atļaujas un atbrīvot vietu"</string>
-    <!-- no translation found for unused_apps_label_v2 (7058776770056517980) -->
-    <skip />
-    <!-- no translation found for unused_apps_summary (8839466950318403115) -->
-    <skip />
+    <string name="unused_apps_label_v2" msgid="7058776770056517980">"Apturēt lietotni, ja tā netiek izmantota"</string>
+    <string name="unused_apps_summary" msgid="8839466950318403115">"Atsaukt atļaujas, dzēst pagaidu failus un izslēgt paziņojumus"</string>
     <string name="auto_revoke_summary" msgid="5867548789805911683">"Ja lietotni dažus mēnešus neizmantosiet, tai tiks noņemtas tālāk norādītās atļaujas, lai aizsargātu jūsu datus."</string>
     <string name="auto_revoke_summary_with_permissions" msgid="389712086597285013">"Ja lietotni dažus mēnešus neizmantosiet, tai tiks noņemtas tālāk norādītās atļaujas, lai aizsargātu jūsu datus: <xliff:g id="PERMS">%1$s</xliff:g>"</string>
     <string name="auto_revoked_apps_page_summary" msgid="6594753657893756536">"Lai aizsargātu jūsu datus, tika atsauktas atļaujas tām lietotnēm, kas nav izmantotas vairākus mēnešus."</string>
@@ -219,6 +217,7 @@
     <string name="auto_revoked_app_summary_many" msgid="5930976230827378798">"Atļauja “<xliff:g id="PERMISSION_NAME">%1$s</xliff:g>” un vēl <xliff:g id="NUMBER">%2$s</xliff:g> tika automātiski noņemtas"</string>
     <string name="unused_apps_page_title" msgid="6986983535677572559">"Neizmantotās lietotnes"</string>
     <string name="unused_apps_page_summary" msgid="1867593913217272155">"Ja kāda lietotne nav izmantota vairākus mēnešus:\n\n• tiek noņemtas atļaujas, lai aizsargātu jūsu datus;\n• tiek apturēti paziņojumi, lai taupītu akumulatora enerģiju;\n• tiek noņemti pagaidu faili, lai atbrīvotu vietu.\n\nLai atkal piešķirtu atļaujas un atļautu paziņojumus, atveriet lietotni."</string>
+    <string name="unused_apps_page_tv_summary" msgid="3685907153054355671">"Ja kāda lietotne nav izmantota vairākus mēnešus:\n\n• tiek noņemtas atļaujas, lai aizsargātu jūsu datus;\n• tiek noņemti pagaidu faili, lai atbrīvotu vietu.\n\nLai atkal piešķirtu atļaujas, atveriet lietotni."</string>
     <string name="last_opened_category_title" msgid="7871347400611202595">"Pēdējoreiz atvērtas pirms vairāk nekā <xliff:g id="NUMBER">%s</xliff:g> mēnešiem"</string>
     <string name="last_opened_summary" msgid="5248984030024968808">"Lietotne pēdējoreiz tika atvērta <xliff:g id="DATE">%s</xliff:g>"</string>
     <string name="last_opened_summary_short" msgid="1646067226191176825">"Pēdējoreiz atvērta <xliff:g id="DATE">%s</xliff:g>"</string>

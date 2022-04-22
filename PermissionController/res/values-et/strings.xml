@@ -199,10 +199,8 @@
     <string name="unused_apps_category_title" msgid="2988455616845243901">"Kasutamata rakenduste seaded"</string>
     <string name="auto_revoke_label" msgid="5068393642936571656">"Eemalda load, kui rakendust ei kasutata"</string>
     <string name="unused_apps_label" msgid="2595428768404901064">"Eemalda load ja vabasta ruumi"</string>
-    <!-- no translation found for unused_apps_label_v2 (7058776770056517980) -->
-    <skip />
-    <!-- no translation found for unused_apps_summary (8839466950318403115) -->
-    <skip />
+    <string name="unused_apps_label_v2" msgid="7058776770056517980">"Tegevusetuna rakenduse tegevuste peatam."</string>
+    <string name="unused_apps_summary" msgid="8839466950318403115">"Eemaldatakse load, kustutatakse ajutised failid ja peatatakse märguanded"</string>
     <string name="auto_revoke_summary" msgid="5867548789805911683">"Teie andmete kaitsmiseks eemaldatakse selle rakenduse load, kui seda mõne kuu jooksul ei kasutata."</string>
     <string name="auto_revoke_summary_with_permissions" msgid="389712086597285013">"Teie andmete kaitsmiseks eemaldatakse selle rakenduse järgmised load, kui rakendust mõne kuu jooksul ei kasutata: <xliff:g id="PERMS">%1$s</xliff:g>"</string>
     <string name="auto_revoked_apps_page_summary" msgid="6594753657893756536">"Teie andmete kaitsmiseks eemaldati load rakendustelt, mida te ei ole mõne kuu jooksul kasutanud."</string>
@@ -219,6 +217,7 @@
     <string name="auto_revoked_app_summary_many" msgid="5930976230827378798">"<xliff:g id="PERMISSION_NAME">%1$s</xliff:g> ja veel <xliff:g id="NUMBER">%2$s</xliff:g> luba eemaldati"</string>
     <string name="unused_apps_page_title" msgid="6986983535677572559">"Kasutamata rakendused"</string>
     <string name="unused_apps_page_summary" msgid="1867593913217272155">"Kui rakendust mõne kuu vältel ei kasutata, toimub järgmine.\n\n• Load eemaldatakse, et teie andmeid kaitsta.\n• Märguanded peatatakse, et akut säästa.\n• Ajutised failid eemaldatakse, et ruumi vabastada.\n\nKui soovite uuesti lubasid anda ja märguandeid lubada, avage rakendus."</string>
+    <string name="unused_apps_page_tv_summary" msgid="3685907153054355671">"Kui rakendust mõne kuu vältel ei kasutata, toimub järgmine.\n\n• Load eemaldatakse, et teie andmeid kaitsta.\n• Ajutised failid eemaldatakse, et ruumi vabastada.\n\nKui soovite uuesti lubasid anda, avage rakendus."</string>
     <string name="last_opened_category_title" msgid="7871347400611202595">"Viimati avatud rohkem kui <xliff:g id="NUMBER">%s</xliff:g> kuud tagasi"</string>
     <string name="last_opened_summary" msgid="5248984030024968808">"Rakendus avati viimati <xliff:g id="DATE">%s</xliff:g>"</string>
     <string name="last_opened_summary_short" msgid="1646067226191176825">"Viimati avatud <xliff:g id="DATE">%s</xliff:g>"</string>

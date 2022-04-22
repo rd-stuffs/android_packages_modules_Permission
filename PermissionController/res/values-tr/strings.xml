@@ -199,10 +199,8 @@
     <string name="unused_apps_category_title" msgid="2988455616845243901">"Kullanılmayan uygulama ayarları"</string>
     <string name="auto_revoke_label" msgid="5068393642936571656">"Uygulama kullanılmıyorsa izinleri kaldır"</string>
     <string name="unused_apps_label" msgid="2595428768404901064">"İzinleri kaldırıp yer aç"</string>
-    <!-- no translation found for unused_apps_label_v2 (7058776770056517980) -->
-    <skip />
-    <!-- no translation found for unused_apps_summary (8839466950318403115) -->
-    <skip />
+    <string name="unused_apps_label_v2" msgid="7058776770056517980">"Kullanılmayan uygulama etkinliğini duraklat"</string>
+    <string name="unused_apps_summary" msgid="8839466950318403115">"İzinleri kaldırın, geçici dosyaları silin ve bildirimleri durdurun"</string>
     <string name="auto_revoke_summary" msgid="5867548789805911683">"Bu uygulama birkaç ay boyunca kullanılmazsa verilerinizi korumak için uygulamanın izinleri kaldırılır."</string>
     <string name="auto_revoke_summary_with_permissions" msgid="389712086597285013">"Uygulama birkaç ay boyunca kullanılmazsa şu izinler verilerinizi korumak için kaldırılacak: <xliff:g id="PERMS">%1$s</xliff:g>"</string>
     <string name="auto_revoked_apps_page_summary" msgid="6594753657893756536">"Birkaç aydır kullanmadığınız uygulamaların izinleri verilerinizi korumak için kaldırıldı."</string>
@@ -219,6 +217,7 @@
     <string name="auto_revoked_app_summary_many" msgid="5930976230827378798">"<xliff:g id="PERMISSION_NAME">%1$s</xliff:g> izni ve diğer <xliff:g id="NUMBER">%2$s</xliff:g> izin kaldırıldı"</string>
     <string name="unused_apps_page_title" msgid="6986983535677572559">"Kullanılmayan uygulamalar"</string>
     <string name="unused_apps_page_summary" msgid="1867593913217272155">"Uygulama birkaç ay kullanılmazsa:\n\n• Verilerinizi korumak için izinler kaldırılır\n• Pilden tasarruf etmek için bildirimler durdurulur\n• Yer açmak için geçici dosyalar kaldırılır\n\nİzinleri ve bildirimleri yeniden etkinleştirmek için uygulamayı açın."</string>
+    <string name="unused_apps_page_tv_summary" msgid="3685907153054355671">"Uygulama birkaç ay kullanılmazsa:\n\n• Verilerinizi korumak için izinler kaldırılır\n• Yer açmak için geçici dosyalar kaldırılır\n\nİzinleri yeniden etkinleştirmek için uygulamayı açın."</string>
     <string name="last_opened_category_title" msgid="7871347400611202595">"En son <xliff:g id="NUMBER">%s</xliff:g> aydan fazla bir süre önce açıldı"</string>
     <string name="last_opened_summary" msgid="5248984030024968808">"Uygulama en son <xliff:g id="DATE">%s</xliff:g> tarihinde açıldı"</string>
     <string name="last_opened_summary_short" msgid="1646067226191176825">"En son <xliff:g id="DATE">%s</xliff:g> tarihinde açıldı"</string>

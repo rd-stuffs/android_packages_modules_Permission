@@ -19,15 +19,12 @@ package com.android.permissioncontroller.permission.data
 /**
  * A record of a user's permission decision for an app.
  *
- * @param packageName package name of the app the user made the decision for
  * @param permissionGroupName permission group name of the decision that was made
- * @param decisionTime the time of the decision, in epoch time. Should be rounded to day-level
- * precision for user privacy.
  * @param isGranted whether the permission was granted or denied
  */
 data class PermissionDecision(
-    val packageName: String,
+    override val packageName: String,
+    override val eventTime: Long,
     val permissionGroupName: String,
-    val decisionTime: Long,
     val isGranted: Boolean
-)
+) : PermissionEvent(packageName, eventTime)
