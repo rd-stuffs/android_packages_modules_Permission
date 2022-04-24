@@ -447,7 +447,7 @@ class SafetySourceIssueTest {
     }
 
     @Test
-    fun build_withInvalidSeverityLevel_throwsIllegalArgumentException() {
+    fun build_withUnspecifiedSeverityLevel_throwsIllegalArgumentException() {
         val exception = assertFailsWith(IllegalArgumentException::class) {
             SafetySourceIssue.Builder(
                 "Issue id",
@@ -457,7 +457,23 @@ class SafetySourceIssueTest {
                 "issue_type_id"
             )
         }
-        assertThat(exception).hasMessageThat().isEqualTo("Unexpected Level for issue: 100")
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("SeverityLevel for SafetySourceIssue must not be SEVERITY_LEVEL_UNSPECIFIED")
+    }
+
+    @Test
+    fun build_withInvalidSeverityLevel_throwsIllegalArgumentException() {
+        val exception = assertFailsWith(IllegalArgumentException::class) {
+            SafetySourceIssue.Builder(
+                "Issue id",
+                "Issue title",
+                "Issue summary",
+                -1,
+                "issue_type_id"
+            )
+        }
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("Unexpected SeverityLevel for SafetySourceIssue: -1")
     }
 
     @Test
@@ -486,7 +502,8 @@ class SafetySourceIssueTest {
         val exception = assertFailsWith(IllegalArgumentException::class) {
             builder.setIssueCategory(-1)
         }
-        assertThat(exception).hasMessageThat().isEqualTo("Unexpected IssueCategory: -1")
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("Unexpected IssueCategory for SafetySourceIssue: -1")
     }
 
     @Test
