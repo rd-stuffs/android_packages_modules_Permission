@@ -21,14 +21,14 @@ import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Context
 import android.content.Intent
 import android.os.Build.VERSION_CODES.TIRAMISU
+import android.safetycenter.SafetySourceData.SEVERITY_LEVEL_CRITICAL_WARNING
+import android.safetycenter.SafetySourceData.SEVERITY_LEVEL_INFORMATION
+import android.safetycenter.SafetySourceData.SEVERITY_LEVEL_UNSPECIFIED
 import android.safetycenter.SafetySourceIssue
 import android.safetycenter.SafetySourceIssue.Action
 import android.safetycenter.SafetySourceIssue.ISSUE_CATEGORY_ACCOUNT
 import android.safetycenter.SafetySourceIssue.ISSUE_CATEGORY_DEVICE
 import android.safetycenter.SafetySourceIssue.ISSUE_CATEGORY_GENERAL
-import android.safetycenter.SafetySourceSeverity.LEVEL_CRITICAL_WARNING
-import android.safetycenter.SafetySourceSeverity.LEVEL_INFORMATION
-import android.safetycenter.SafetySourceSeverity.LEVEL_UNSPECIFIED
 import android.safetycenter.cts.testing.EqualsHashCodeToStringTester
 import android.safetycenter.cts.testing.Generic
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
@@ -199,7 +199,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -215,7 +215,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -231,7 +231,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -247,7 +247,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .setSubtitle("Issue subtitle")
@@ -264,7 +264,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -280,13 +280,13 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
                 .build()
 
-        assertThat(safetySourceIssue.severityLevel).isEqualTo(LEVEL_INFORMATION)
+        assertThat(safetySourceIssue.severityLevel).isEqualTo(SEVERITY_LEVEL_INFORMATION)
     }
 
     @Test
@@ -296,7 +296,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -312,7 +312,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -329,7 +329,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -346,7 +346,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -365,7 +365,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -381,7 +381,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -398,7 +398,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -414,7 +414,7 @@ class SafetySourceIssueTest {
                 Generic.asNull(),
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
         }
@@ -427,7 +427,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 Generic.asNull(),
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
         }
@@ -440,10 +440,25 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 Generic.asNull(),
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
         }
+    }
+
+    @Test
+    fun build_withUnspecifiedSeverityLevel_throwsIllegalArgumentException() {
+        val exception = assertFailsWith(IllegalArgumentException::class) {
+            SafetySourceIssue.Builder(
+                "Issue id",
+                "Issue title",
+                "Issue summary",
+                SEVERITY_LEVEL_UNSPECIFIED,
+                "issue_type_id"
+            )
+        }
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("SeverityLevel for SafetySourceIssue must not be SEVERITY_LEVEL_UNSPECIFIED")
     }
 
     @Test
@@ -453,11 +468,12 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_UNSPECIFIED,
+                -1,
                 "issue_type_id"
             )
         }
-        assertThat(exception).hasMessageThat().isEqualTo("Unexpected Level for issue: 100")
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("Unexpected SeverityLevel for SafetySourceIssue: -1")
     }
 
     @Test
@@ -467,7 +483,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 Generic.asNull()
             )
         }
@@ -480,13 +496,14 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
         val exception = assertFailsWith(IllegalArgumentException::class) {
             builder.setIssueCategory(-1)
         }
-        assertThat(exception).hasMessageThat().isEqualTo("Unexpected IssueCategory: -1")
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("Unexpected IssueCategory for SafetySourceIssue: -1")
     }
 
     @Test
@@ -496,7 +513,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
         val exception = assertFailsWith(IllegalArgumentException::class) {
@@ -520,7 +537,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
 
@@ -538,7 +555,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .addAction(action1)
@@ -559,7 +576,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .setSubtitle("Issue subtitle")
@@ -579,7 +596,7 @@ class SafetySourceIssueTest {
                 "Issue id",
                 "Issue title",
                 "Issue summary",
-                LEVEL_INFORMATION,
+                SEVERITY_LEVEL_INFORMATION,
                 "issue_type_id"
             )
                 .setSubtitle("Issue subtitle")
@@ -600,7 +617,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .setSubtitle("Issue subtitle")
@@ -613,7 +630,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .setSubtitle("Issue subtitle")
@@ -628,7 +645,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .addAction(action1)
@@ -639,7 +656,7 @@ class SafetySourceIssueTest {
                     "Other issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .addAction(action1)
@@ -650,7 +667,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Other issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .addAction(action1)
@@ -661,7 +678,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Other issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .addAction(action1)
@@ -672,7 +689,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_CRITICAL_WARNING,
+                    SEVERITY_LEVEL_CRITICAL_WARNING,
                     "issue_type_id"
                 )
                     .addAction(action1)
@@ -683,7 +700,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "other_issue_type_id"
                 )
                     .addAction(action1)
@@ -694,7 +711,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .addAction(action2)
@@ -705,7 +722,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .setSubtitle("Other issue subtitle")
@@ -720,7 +737,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .setSubtitle("Other issue subtitle")
@@ -735,7 +752,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .setSubtitle("Other issue subtitle")
@@ -750,7 +767,7 @@ class SafetySourceIssueTest {
                     "Issue id",
                     "Issue title",
                     "Issue summary",
-                    LEVEL_INFORMATION,
+                    SEVERITY_LEVEL_INFORMATION,
                     "issue_type_id"
                 )
                     .setSubtitle("Other issue subtitle")

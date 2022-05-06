@@ -29,6 +29,7 @@ import androidx.test.filters.SdkSuppress
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 @SdkSuppress(minSdkVersion = TIRAMISU, codeName = "Tiramisu")
@@ -53,8 +54,7 @@ class SafetyCenterEntryTest {
             pendingIntent2)
 
     private val entry1 =
-        SafetyCenterEntry.Builder("eNtRy_iD")
-            .setTitle("a title")
+        SafetyCenterEntry.Builder("eNtRy_iD", "a title")
             .setSummary("a summary")
             .setPendingIntent(pendingIntent1)
             .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_UNKNOWN)
@@ -125,8 +125,7 @@ class SafetyCenterEntryTest {
     @Test
     fun isEnabled_defaultTrue() {
         assertThat(
-            SafetyCenterEntry.Builder("eNtRy_iD")
-                .setTitle("a title")
+            SafetyCenterEntry.Builder("eNtRy_iD", "a title")
                 .setPendingIntent(pendingIntent1)
                 .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_UNKNOWN)
                 .build()
@@ -160,6 +159,26 @@ class SafetyCenterEntryTest {
     }
 
     @Test
+    fun build_withInvalidEntrySeverityLevel_throwsIllegalArgumentException() {
+        val exception = assertFailsWith(IllegalArgumentException::class) {
+            SafetyCenterEntry.Builder(entry1).setSeverityLevel(-1)
+        }
+
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("Unexpected EntrySeverityLevel for SafetyCenterEntry: -1")
+    }
+
+    @Test
+    fun build_withInvalidSeverityUnspecifiedIconType_throwsIllegalArgumentException() {
+        val exception = assertFailsWith(IllegalArgumentException::class) {
+            SafetyCenterEntry.Builder(entry1).setSeverityUnspecifiedIconType(-1)
+        }
+
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("Unexpected SeverityUnspecifiedIconType for SafetyCenterEntry: -1")
+    }
+
+    @Test
     fun describeContents_returns0() {
         assertThat(entry1.describeContents()).isEqualTo(0)
     }
@@ -182,8 +201,7 @@ class SafetyCenterEntryTest {
         EqualsHashCodeToStringTester()
             .addEqualityGroup(entry1, SafetyCenterEntry.Builder(entry1).build())
             .addEqualityGroup(
-                SafetyCenterEntry.Builder("id")
-                    .setTitle("a title")
+                SafetyCenterEntry.Builder("id", "a title")
                     .setSummary("a summary")
                     .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_OK)
                     .setSeverityUnspecifiedIconType(
@@ -192,8 +210,7 @@ class SafetyCenterEntryTest {
                     .setIconAction(SafetyCenterEntry.IconAction.ICON_ACTION_TYPE_INFO,
                         pendingIntent2)
                     .build(),
-                SafetyCenterEntry.Builder("id")
-                    .setTitle("a title")
+                SafetyCenterEntry.Builder("id", "a title")
                     .setSummary("a summary")
                     .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_OK)
                     .setSeverityUnspecifiedIconType(
@@ -264,6 +281,19 @@ class SafetyCenterEntryTest {
                 .pendingIntent
         )
             .isEqualTo(pendingIntent2)
+    }
+
+    @Test
+    fun iconAction_withInvalidIconActionType_throwsIllegalArgumentException() {
+        val exception = assertFailsWith(IllegalArgumentException::class) {
+            SafetyCenterEntry.IconAction(
+                -1,
+                pendingIntent1
+            )
+        }
+
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("Unexpected IconActionType for IconAction: -1")
     }
 
     @Test

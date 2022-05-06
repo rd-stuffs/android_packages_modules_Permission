@@ -25,15 +25,14 @@ import androidx.test.filters.SdkSuppress
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 @SdkSuppress(minSdkVersion = TIRAMISU, codeName = "Tiramisu")
 class SafetyCenterStatusTest {
 
     private val baseStatus =
-        SafetyCenterStatus.Builder()
-            .setTitle("This is my title")
-            .setSummary("This is my summary")
+        SafetyCenterStatus.Builder("This is my title", "This is my summary")
             .setSeverityLevel(SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_RECOMMENDATION)
             .setRefreshStatus(SafetyCenterStatus.REFRESH_STATUS_DATA_FETCH_IN_PROGRESS)
             .build()
@@ -80,9 +79,11 @@ class SafetyCenterStatusTest {
     @Test
     fun getSeverityLevel_defaultUnknown() {
         assertThat(
-            SafetyCenterStatus.Builder()
-                .setTitle("This is my title")
-                .setSummary("This is my summary")
+            SafetyCenterStatus.Builder(
+                "This is my title",
+                "This is my summary"
+            )
+                .setSeverityLevel(SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_UNKNOWN)
                 .build()
                 .severityLevel
         )
@@ -111,13 +112,32 @@ class SafetyCenterStatusTest {
     @Test
     fun getRefreshStatus_defaultNone() {
         assertThat(
-            SafetyCenterStatus.Builder()
-                .setTitle("This is my title")
-                .setSummary("This is my summary")
+            SafetyCenterStatus.Builder("This is my title", "This is my summary")
+                .setSeverityLevel(SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_UNKNOWN)
                 .build()
                 .refreshStatus
         )
             .isEqualTo(SafetyCenterStatus.REFRESH_STATUS_NONE)
+    }
+
+    @Test
+    fun build_withInvalidOverallSeverityLevel_throwsIllegalArgumentException() {
+        val exception = assertFailsWith(IllegalArgumentException::class) {
+            SafetyCenterStatus.Builder(baseStatus).setSeverityLevel(-1)
+        }
+
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("Unexpected OverallSeverityLevel for SafetyCenterStatus: -1")
+    }
+
+    @Test
+    fun build_withInvalidRefreshStatus_throwsIllegalArgumentException() {
+        val exception = assertFailsWith(IllegalArgumentException::class) {
+            SafetyCenterStatus.Builder(baseStatus).setRefreshStatus(-1)
+        }
+
+        assertThat(exception).hasMessageThat()
+            .isEqualTo("Unexpected RefreshStatus for SafetyCenterStatus: -1")
     }
 
     @Test
@@ -135,23 +155,17 @@ class SafetyCenterStatusTest {
         EqualsHashCodeToStringTester()
             .addEqualityGroup(
                 baseStatus,
-                SafetyCenterStatus.Builder()
-                    .setTitle("This is my title")
-                    .setSummary("This is my summary")
+                SafetyCenterStatus.Builder("This is my title", "This is my summary")
                     .setSeverityLevel(SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_RECOMMENDATION)
                     .setRefreshStatus(SafetyCenterStatus.REFRESH_STATUS_DATA_FETCH_IN_PROGRESS)
                     .build(),
                 SafetyCenterStatus.Builder(baseStatus).build()
             )
             .addEqualityGroup(
-                SafetyCenterStatus.Builder()
-                    .setTitle("same title")
-                    .setSummary("same summary")
+                SafetyCenterStatus.Builder("same title", "same summary")
                     .setSeverityLevel(SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_OK)
                     .build(),
-                SafetyCenterStatus.Builder()
-                    .setTitle("same title")
-                    .setSummary("same summary")
+                SafetyCenterStatus.Builder("same title", "same summary")
                     .setSeverityLevel(SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_OK)
                     .build()
             )
