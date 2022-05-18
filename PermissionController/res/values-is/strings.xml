@@ -455,7 +455,7 @@
     <string name="permgrouprequest_storage_pre_q" msgid="1681166745228672009">"Veita &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; aðgang að &lt;b&gt;myndum, myndskeiðum, tónlist, hljóði og öðrum skrám&lt;/b&gt; í tækinu?"</string>
     <string name="permgrouprequest_read_media_aural" msgid="5948278590400297839">"Veita &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; aðgang að tónlist og öðrum hljóðskrám í þessu tæki?"</string>
     <string name="permgrouprequest_read_media_visual" msgid="4188474766470776052">"Veita &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; aðgang að myndum og myndskeiðum í þessu tæki?"</string>
-    <string name="permgrouprequest_microphone" msgid="2825208549114811299">"Leyfa forritinu &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; að taka upp hljóð?"</string>
+    <string name="permgrouprequest_microphone" msgid="2825208549114811299">"Leyfa &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; að taka upp hljóð?"</string>
     <string name="permgrouprequestdetail_microphone" msgid="8510456971528228861">"Forritið mun aðeins geta tekið upp hljóð þegar þú ert að nota forritið"</string>
     <string name="permgroupbackgroundrequest_microphone" msgid="8874462606796368183">"Viltu leyfa &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; að taka upp hljóð?"</string>
     <string name="permgroupbackgroundrequestdetail_microphone" msgid="553702902263681838">"Þetta forrit gæti viljað taka upp hljóð hvenær sem er, jafnvel þegar þú ert ekki að nota forritið. "<annotation id="link">"Þú getur leyft það í stillingum."</annotation></string>
@@ -473,8 +473,8 @@
     <string name="permgrouprequest_sensors" msgid="4397358316850652235">"Viltu veita &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; aðgang að skynjaragögnum um lífsmörk þín?"</string>
     <string name="permgroupupgraderequestdetail_sensors" msgid="6651914048792092835">"Þetta forrit vill fá stöðugan aðgang að skynjaragögnum um lífsmörk þín, líka þegar þú ert ekki að nota forritið. Ef þú vilt gera þessa breytingu skaltu "<annotation id="link">"opna stillingar."</annotation></string>
     <string name="permgroupbackgroundrequest_sensors" msgid="5661924322018503886">"Viltu veita &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; aðgang að skynjaragögnum um lífsmörk þín?"</string>
-    <string name="permgroupbackgroundrequestdetail_sensors" msgid="7649389834182449783">"Til að veita þessu forriti stöðugan aðgang að gögnum líkamsskynjara skaltu "<annotation id="link">"opna stillingarnar."</annotation></string>
-    <string name="permgroupupgraderequest_sensors" msgid="7576527638411370468">"Veita &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; aðgang að gögnum líkamsskynjara á meðan forritið er í notkun?"</string>
+    <string name="permgroupbackgroundrequestdetail_sensors" msgid="7726767635834043501">"Til að veita þessu forriti samfelldan aðgang að gögnum líkamsskynjara skaltu "<annotation id="link">"opna stillingarnar."</annotation></string>
+    <string name="permgroupupgraderequest_sensors" msgid="7576527638411370468">"Veita &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; áfram aðgang að gögnum líkamsskynjara á meðan forritið er í notkun?"</string>
     <string name="permgrouprequest_notifications" msgid="6396739062335106181">"Leyfa &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; að senda þér tilkynningar?"</string>
     <string name="permgrouprequestcontinue_notifications" msgid="3895098107355024027">"Leyfa &lt;b&gt;<xliff:g id="APP_NAME">%1$s</xliff:g>&lt;/b&gt; að halda áfram að senda þér tilkynningar?"</string>
     <string name="auto_granted_permissions" msgid="6009452264824455892">"Stýrðar heimildir"</string>

@@ -14,16 +14,5 @@
  * limitations under the License.
  */
 
-package com.android.permissioncontroller.permission.data
-
-/**
- * A record of a permission event caused by the user.
- *
- * @param packageName package name of the app the event is for
- * @param eventTime the time of the event, in epoch time. Should be rounded to day-level
- * precision for user privacy.
- */
-abstract class PermissionEvent(
-    open val packageName: String,
-    open val eventTime: Long
-)
+@androidx.annotation.RequiresApi(api = android.os.Build.VERSION_CODES.S)
+package com.android.permissioncontroller.hibernation.v31;
