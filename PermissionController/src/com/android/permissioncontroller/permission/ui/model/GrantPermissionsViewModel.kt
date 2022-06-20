@@ -119,7 +119,6 @@ class GrantPermissionsViewModel(
     private val app: Application,
     private val packageName: String,
     private val requestedPermissions: List<String>,
-    private val legacyAccessPermissions: List<String>,
     private val sessionId: Long,
     private val storedState: Bundle?
 ) : ViewModel() {
@@ -323,12 +322,7 @@ class GrantPermissionsViewModel(
                 buttonVisibilities[DENY_BUTTON] = true
                 buttonVisibilities[ALLOW_ONE_TIME_BUTTON] =
                     Utils.supportsOneTimeGrant(groupName)
-                var message = if (
-                    legacyAccessPermissions.any { it in groupState.affectedPermissions }) {
-                    RequestMessage.CONTINUE_MESSAGE
-                } else {
-                    RequestMessage.FG_MESSAGE
-                }
+                var message = RequestMessage.FG_MESSAGE
                 // Whether or not to use the foreground, background, or no detail message.
                 // null ==
                 var detailMessage = RequestMessage.NO_MESSAGE
@@ -716,7 +710,7 @@ class GrantPermissionsViewModel(
 
         // Do not attempt to grant background access if foreground access is not either already
         // granted or requested
-        if (isBackground && !group.foreground.isGrantedExcludeRevokeWhenRequestedPermissions &&
+        if (isBackground && !group.foreground.isGrantedExcludingRWROrAllRWR &&
             !hasForegroundRequest) {
             Log.w(LOG_TAG, "Cannot grant $perm as the matching foreground permission is not " +
                 "already granted.")
@@ -730,8 +724,8 @@ class GrantPermissionsViewModel(
 
         // TODO(b/205888750): remove isRuntimePermReview line once confident in
         //  REVIEW_REQUIRED flag setting
-        if ((isBackground && group.background.isGrantedExcludeRevokeWhenRequestedPermissions ||
-            !isBackground && group.foreground.isGrantedExcludeRevokeWhenRequestedPermissions) &&
+        if ((isBackground && group.background.isGrantedExcludingRWROrAllRWR ||
+            !isBackground && group.foreground.isGrantedExcludingRWROrAllRWR) &&
             !group.isRuntimePermReviewRequired) {
             // If FINE location is not granted, do not grant it automatically when COARSE
             // location is already granted.
@@ -1293,9 +1287,8 @@ class GrantPermissionsViewModel(
             NO_MESSAGE(3),
             FG_FINE_LOCATION_MESSAGE(4),
             FG_COARSE_LOCATION_MESSAGE(5),
-            CONTINUE_MESSAGE(6),
-            STORAGE_SUPERGROUP_MESSAGE_Q_TO_S(7),
-            STORAGE_SUPERGROUP_MESSAGE_PRE_Q(8);
+            STORAGE_SUPERGROUP_MESSAGE_Q_TO_S(6),
+            STORAGE_SUPERGROUP_MESSAGE_PRE_Q(7);
         }
 
         fun filterNotificationPermissionIfNeededSync(
@@ -1331,13 +1324,12 @@ class GrantPermissionsViewModelFactory(
     private val app: Application,
     private val packageName: String,
     private val requestedPermissions: Array<String>,
-    private val legacyAccessPermissions: Array<String>,
     private val sessionId: Long,
     private val savedState: Bundle?
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
         return GrantPermissionsViewModel(app, packageName, requestedPermissions.toList(),
-            legacyAccessPermissions.toList(), sessionId, savedState) as T
+            sessionId, savedState) as T
     }
 }
